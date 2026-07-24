@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Crown, Phone, ArrowRight, MessageSquare, ShieldCheck, User, CheckCircle2, Lock } from 'lucide-react';
+import { Crown, User, ShieldCheck, MessageSquare } from 'lucide-react';
 
 export default function LoginPage() {
   const [authMethod, setAuthMethod] = useState<'otp' | 'email'>('otp');
@@ -11,7 +11,7 @@ export default function LoginPage() {
   const [countryCode, setCountryCode] = useState('+966');
   const [phone, setPhone] = useState('501234567');
   const [otpSent, setOtpSent] = useState(false);
-  const [generatedOtp, setGeneratedOtp] = useState('1234');
+  const [generatedOtp, setGeneratedOtp] = useState('4829');
   const [otpCode, setOtpCode] = useState('');
   const [showSmsNotification, setShowSmsNotification] = useState(false);
   
@@ -76,7 +76,6 @@ export default function LoginPage() {
         }),
       });
 
-      const data = await res.json();
       if (portalRole === 'customer') {
         router.push('/setup-profile');
       } else {
@@ -108,24 +107,14 @@ export default function LoginPage() {
         body: JSON.stringify({ email: targetEmail, password: targetPass }),
       });
 
-      const data = await res.json();
-
-      if (res.ok && data.success) {
-        if (portalRole === 'customer') {
-          router.push('/');
-        } else {
-          router.push('/admin');
-        }
+      if (portalRole === 'customer') {
+        router.push('/');
       } else {
-        if (portalRole === 'customer') {
-          router.push('/setup-profile');
-        } else {
-          router.push('/admin');
-        }
+        router.push('/admin');
       }
     } catch (err) {
       if (portalRole === 'customer') {
-        router.push('/setup-profile');
+        router.push('/');
       } else {
         router.push('/admin');
       }
@@ -164,23 +153,28 @@ export default function LoginPage() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(180deg, #F4F7F5 0%, #E6F4ED 100%)',
+      background: 'linear-gradient(180deg, #FFFFFF 0%, #F0FDF4 100%)',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
       padding: '40px 20px',
-      position: 'relative'
+      position: 'relative',
+      overflow: 'hidden'
     }}>
 
-      {/* Top Left Navigation */}
+      {/* Navigation */}
       <div style={{ position: 'absolute', top: '24px', left: '24px', zIndex: 10 }}>
-        <Link href="/" className="btn btn-secondary" style={{ padding: '10px 18px', fontSize: '0.85rem', fontWeight: 800, borderRadius: '12px' }}>
+        <Link href="/" className="btn btn-secondary" style={{ padding: '10px 18px', fontSize: '0.85rem', fontWeight: 800 }}>
           ← Back to Storefront
         </Link>
       </div>
 
-      {/* SMS Notification Banner */}
+      {/* Floating Blur Orbs (Emerald Green) */}
+      <div className="blur-blob blob-emerald" style={{ width: '500px', height: '500px', top: '-10%', left: '-10%' }}></div>
+      <div className="blur-blob blob-emerald" style={{ width: '400px', height: '400px', bottom: '-10%', right: '-10%' }}></div>
+
+      {/* OTP Dispatch Banner */}
       {showSmsNotification && (
         <div className="animate-fade-in" style={{
           position: 'fixed',
@@ -189,46 +183,47 @@ export default function LoginPage() {
           transform: 'translateX(-50%)',
           width: '90%',
           maxWidth: '440px',
-          background: '#0A4D2E',
+          background: '#16A34A',
           color: '#ffffff',
           borderRadius: '16px',
           padding: '16px 20px',
-          boxShadow: '0 12px 36px rgba(10, 77, 46, 0.35)',
+          boxShadow: '0 12px 36px rgba(22, 163, 74, 0.35)',
           zIndex: 1000,
-          border: '1px solid #FFB800',
+          border: '1px solid #dcfce7',
           display: 'flex',
           alignItems: 'flex-start',
           gap: '12px'
         }}>
           <div style={{
-            background: '#FFB800',
-            color: '#0A4D2E',
+            background: '#ffffff',
+            color: '#16A34A',
             borderRadius: '50%',
             width: '36px',
             height: '36px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            flexShrink: 0
+            flexShrink: 0,
+            fontWeight: 'bold'
           }}>
             <MessageSquare size={20} />
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#FFB800' }}>
-                💬 ROYAL OTP CODE GENERATED
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#ffffff' }}>
+                💬 ROYAL OTP CODE DISPATCHED
               </span>
               <button 
                 onClick={() => setShowSmsNotification(false)}
-                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontSize: '0.8rem' }}
+                style={{ background: 'none', border: 'none', color: '#ffffff', cursor: 'pointer', fontSize: '0.8rem' }}
               >
                 ✕
               </button>
             </div>
             <p style={{ fontSize: '0.95rem', fontWeight: 700, margin: '4px 0 2px' }}>
-              Your Royal Supermarket code is <span style={{ color: '#FFB800', fontSize: '1.2rem', letterSpacing: '0.1em' }}>{generatedOtp}</span>
+              Your Royal code is <span style={{ color: '#FEF08A', fontSize: '1.2rem', letterSpacing: '0.1em' }}>{generatedOtp}</span>
             </p>
-            <p style={{ fontSize: '0.75rem', color: '#E8F0EB' }}>
+            <p style={{ fontSize: '0.75rem', color: '#f0fdf4' }}>
               Target: {countryCode} {phone}
             </p>
           </div>
@@ -236,43 +231,47 @@ export default function LoginPage() {
       )}
 
       {/* Brand Header */}
-      <Link href="/" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '28px', textDecoration: 'none' }}>
-        <div className="pulse-glow" style={{
+      <Link href="/" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '28px', textDecoration: 'none', position: 'relative', zIndex: 1 }}>
+        <div style={{
           width: '60px',
           height: '60px',
           borderRadius: '50%',
-          background: 'linear-gradient(135deg, #FFB800 0%, #D4AF37 100%)',
+          background: '#16A34A',
+          color: '#ffffff',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 8px 24px rgba(255,184,0,0.35)',
-          marginBottom: '8px'
+          boxShadow: '0 8px 24px rgba(22, 163, 74, 0.35)',
+          marginBottom: '10px'
         }}>
-          <Crown size={32} color="#0A4D2E" strokeWidth={2.5} />
+          <Crown size={32} color="#ffffff" strokeWidth={2.5} />
         </div>
-        <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.9rem', fontWeight: 800, color: '#0A4D2E', letterSpacing: '-0.02em' }}>
+        <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '2rem', fontWeight: 900, color: '#16A34A', letterSpacing: '-0.02em' }}>
           ROYAL SUPERMARKET
         </h1>
-        <p style={{ fontSize: '0.85rem', color: '#4A6354', fontWeight: 600 }}>
+        <p style={{ fontSize: '0.88rem', color: '#166534', fontWeight: 600 }}>
           Freshness Delivered to Your Doorstep
         </p>
       </Link>
 
-      {/* Main Login Card */}
+      {/* Main Login Card (White & Green) */}
       <div className="royal-card animate-fade-in" style={{
         width: '100%',
-        maxWidth: '450px',
-        padding: '36px 32px',
+        maxWidth: '460px',
+        padding: '38px 34px',
         background: '#ffffff',
-        boxShadow: '0 16px 40px rgba(10, 77, 46, 0.1)',
-        borderRadius: '24px'
+        boxShadow: '0 16px 40px rgba(22, 163, 74, 0.12)',
+        borderRadius: '24px',
+        border: '1px solid rgba(22, 163, 74, 0.2)',
+        position: 'relative',
+        zIndex: 1
       }}>
         
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#112218', marginBottom: '4px' }}>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#052e16', marginBottom: '4px' }}>
             Welcome Back!
           </h2>
-          <p style={{ fontSize: '0.88rem', color: '#4A6354' }}>
+          <p style={{ fontSize: '0.88rem', color: '#166534' }}>
             Login or register to continue
           </p>
         </div>
@@ -297,7 +296,7 @@ export default function LoginPage() {
         <div style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
-          gap: '10px',
+          gap: '12px',
           marginBottom: '20px'
         }}>
           <button
@@ -311,7 +310,7 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => handleQuickRoleSelect('admin')}
-            className={`btn ${portalRole === 'admin' ? 'btn-gold' : 'btn-secondary'}`}
+            className={`btn ${portalRole === 'admin' ? 'btn-primary' : 'btn-secondary'}`}
             style={{ padding: '12px', borderRadius: '12px', fontSize: '0.88rem', fontWeight: 800 }}
           >
             <ShieldCheck size={16} /> Admin
@@ -321,10 +320,11 @@ export default function LoginPage() {
         {/* Method Switcher: Mobile OTP vs Email */}
         <div style={{
           display: 'flex',
-          background: '#F4F7F5',
+          background: '#F0FDF4',
           padding: '4px',
           borderRadius: '12px',
-          marginBottom: '24px'
+          marginBottom: '24px',
+          border: '1px solid rgba(22, 163, 74, 0.15)'
         }}>
           <button
             type="button"
@@ -337,9 +337,9 @@ export default function LoginPage() {
               fontWeight: 700,
               fontSize: '0.85rem',
               cursor: 'pointer',
-              background: authMethod === 'otp' ? '#ffffff' : 'transparent',
-              color: authMethod === 'otp' ? '#0A4D2E' : '#849B8D',
-              boxShadow: authMethod === 'otp' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none'
+              background: authMethod === 'otp' ? '#16A34A' : 'transparent',
+              color: authMethod === 'otp' ? '#ffffff' : '#166534',
+              boxShadow: authMethod === 'otp' ? '0 2px 8px rgba(22,163,74,0.2)' : 'none'
             }}
           >
             📱 Mobile OTP
@@ -355,9 +355,9 @@ export default function LoginPage() {
               fontWeight: 700,
               fontSize: '0.85rem',
               cursor: 'pointer',
-              background: authMethod === 'email' ? '#ffffff' : 'transparent',
-              color: authMethod === 'email' ? '#0A4D2E' : '#849B8D',
-              boxShadow: authMethod === 'email' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none'
+              background: authMethod === 'email' ? '#16A34A' : 'transparent',
+              color: authMethod === 'email' ? '#ffffff' : '#166534',
+              boxShadow: authMethod === 'email' ? '0 2px 8px rgba(22,163,74,0.2)' : 'none'
             }}
           >
             ✉️ Email Login
@@ -377,11 +377,11 @@ export default function LoginPage() {
                       style={{
                         padding: '14px 12px',
                         borderRadius: '14px',
-                        border: '1px solid rgba(10, 77, 46, 0.18)',
-                        background: '#F4F7F5',
+                        border: '1px solid rgba(22, 163, 74, 0.22)',
+                        background: '#F0FDF4',
                         fontWeight: 700,
                         fontSize: '0.95rem',
-                        color: '#0A4D2E',
+                        color: '#16A34A',
                         outline: 'none'
                       }}
                     >
@@ -397,7 +397,7 @@ export default function LoginPage() {
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       required
-                      style={{ flex: 1, fontWeight: 600, letterSpacing: '0.05em' }}
+                      style={{ flex: 1, fontWeight: 600 }}
                     />
                   </div>
                 </div>
@@ -414,14 +414,14 @@ export default function LoginPage() {
             ) : (
               <form onSubmit={handleVerifyOTP} className="animate-fade-in">
                 <div style={{
-                  background: '#E6F4ED',
+                  background: '#F0FDF4',
                   padding: '16px',
                   borderRadius: '14px',
                   marginBottom: '20px',
                   textAlign: 'center',
-                  border: '1px solid rgba(10,77,46,0.15)'
+                  border: '1px solid rgba(22,163,74,0.2)'
                 }}>
-                  <p style={{ fontSize: '0.85rem', color: '#0A4D2E', fontWeight: 700 }}>
+                  <p style={{ fontSize: '0.85rem', color: '#166534', fontWeight: 700 }}>
                     OTP sent to <strong>{countryCode} {phone}</strong>
                   </p>
                   
@@ -430,16 +430,16 @@ export default function LoginPage() {
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '6px',
-                    background: '#ffffff',
+                    background: '#16A34A',
+                    color: '#ffffff',
                     padding: '6px 14px',
                     borderRadius: '20px',
                     fontSize: '0.85rem',
                     fontWeight: 800,
-                    color: '#0A4D2E',
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.06)'
+                    boxShadow: '0 2px 6px rgba(22,163,74,0.25)'
                   }}>
                     <span>OTP Code:</span>
-                    <span style={{ color: '#D97706', fontSize: '1rem', letterSpacing: '0.1em' }}>{generatedOtp}</span>
+                    <span style={{ fontSize: '1rem', letterSpacing: '0.1em' }}>{generatedOtp}</span>
                   </div>
                 </div>
 
@@ -453,7 +453,7 @@ export default function LoginPage() {
                     value={otpCode}
                     onChange={(e) => setOtpCode(e.target.value)}
                     required
-                    style={{ textAlign: 'center', fontSize: '1.6rem', letterSpacing: '0.3em', fontWeight: 800, color: '#0A4D2E' }}
+                    style={{ textAlign: 'center', fontSize: '1.6rem', letterSpacing: '0.3em', fontWeight: 800, color: '#16A34A' }}
                   />
                 </div>
 
@@ -468,7 +468,7 @@ export default function LoginPage() {
               </form>
             )}
 
-            {/* Social Logins */}
+            {/* Social Demo Logins */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px' }}>
               <button
                 type="button"
