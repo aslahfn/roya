@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Crown, User, ShieldCheck, ArrowRight, MessageSquare } from 'lucide-react';
+import { Crown, User, ShieldCheck, ArrowRight, Sparkles, Lock, CheckCircle2 } from 'lucide-react';
 
 export default function LoginPage() {
   const [loginMode, setLoginMode] = useState<'customer' | 'admin'>('customer');
@@ -37,7 +37,6 @@ export default function LoginPage() {
           router.push('/admin');
         }
       } else {
-        // Fallback demo redirect if user not seeded yet
         if (loginMode === 'customer') {
           router.push('/setup-profile');
         } else {
@@ -68,7 +67,7 @@ export default function LoginPage() {
       body: JSON.stringify({ email: targetEmail, password: 'password123' }),
     })
       .then((res) => res.json())
-      .then((data) => {
+      .then(() => {
         if (role === 'customer') {
           router.push('/');
         } else {
@@ -88,53 +87,78 @@ export default function LoginPage() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(180deg, #F4F7F5 0%, #E6F4ED 100%)',
+      background: 'linear-gradient(135deg, #0A4D2E 0%, #063821 50%, #042417 100%)',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
       padding: '40px 20px',
-      position: 'relative'
+      position: 'relative',
+      overflow: 'hidden'
     }}>
 
-      {/* Brand Header */}
-      <Link href="/" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '28px', textDecoration: 'none' }}>
-        <div style={{
-          width: '56px',
-          height: '56px',
+      {/* Floating Glassmorphism Blur Blobs */}
+      <div className="blur-blob blob-gold" style={{ width: '500px', height: '500px', top: '-10%', left: '-10%' }}></div>
+      <div className="blur-blob blob-emerald" style={{ width: '600px', height: '600px', bottom: '-15%', right: '-10%' }}></div>
+      <div className="blur-blob blob-mint" style={{ width: '400px', height: '400px', top: '40%', right: '15%' }}></div>
+
+      {/* Brand Crown Header */}
+      <Link href="/" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '32px', textDecoration: 'none', position: 'relative', zIndex: 10 }}>
+        <div className="royal-pulse" style={{
+          width: '64px',
+          height: '64px',
           borderRadius: '50%',
-          background: 'linear-gradient(135deg, #FFB800 0%, #D4AF37 100%)',
+          background: 'linear-gradient(135deg, #FFC837 0%, #FFB800 50%, #D4AF37 100%)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 8px 24px rgba(255,184,0,0.35)',
-          marginBottom: '8px'
+          boxShadow: '0 12px 32px rgba(255, 184, 0, 0.45)',
+          marginBottom: '12px'
         }}>
-          <Crown size={32} color="#0A4D2E" strokeWidth={2.5} />
+          <Crown size={36} color="#0A4D2E" strokeWidth={2.5} />
         </div>
-        <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.8rem', fontWeight: 800, color: '#0A4D2E', letterSpacing: '-0.02em' }}>
+        <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '2.2rem', fontWeight: 900, color: '#ffffff', letterSpacing: '-0.02em', textShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
           ROYAL SUPERMARKET
         </h1>
-        <p style={{ fontSize: '0.85rem', color: '#4a6354', fontWeight: 600 }}>
-          System Portal Access
-        </p>
+        <div style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '6px',
+          background: 'rgba(255,184,0,0.2)',
+          border: '1px solid rgba(255,184,0,0.35)',
+          padding: '4px 14px',
+          borderRadius: '20px',
+          fontSize: '0.78rem',
+          color: '#FFB800',
+          fontWeight: 800,
+          marginTop: '6px'
+        }}>
+          <Sparkles size={14} />
+          <span>SYSTEM PORTAL AUTHENTICATION</span>
+        </div>
       </Link>
 
-      {/* Portal Container */}
-      <div className="royal-card animate-fade-in" style={{
+      {/* Ultra-Premium Glass Panel */}
+      <div className="glass-panel animate-fade-in" style={{
         width: '100%',
-        maxWidth: '460px',
-        padding: '36px 32px',
-        background: '#ffffff',
-        boxShadow: '0 16px 40px rgba(10, 77, 46, 0.1)'
+        maxWidth: '480px',
+        padding: '40px 36px',
+        background: 'rgba(255, 255, 255, 0.92)',
+        backdropFilter: 'blur(30px)',
+        WebkitBackdropFilter: 'blur(30px)',
+        boxShadow: '0 24px 60px rgba(0, 0, 0, 0.3)',
+        borderRadius: '28px',
+        position: 'relative',
+        zIndex: 10,
+        border: '1px solid rgba(255, 255, 255, 0.6)'
       }}>
 
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#112218', marginBottom: '4px' }}>
-            System Portal Login
+        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0A4D2E', marginBottom: '6px' }}>
+            Choose Portal Access
           </h2>
-          <p style={{ fontSize: '0.85rem', color: '#4a6354' }}>
-            Select portal role to continue
+          <p style={{ fontSize: '0.88rem', color: '#4A6354' }}>
+            Select your role to access Customer Store or Admin Dashboard
           </p>
         </div>
 
@@ -144,7 +168,7 @@ export default function LoginPage() {
             border: '1px solid #EF4444',
             color: '#B91C1C',
             padding: '12px 16px',
-            borderRadius: '12px',
+            borderRadius: '14px',
             marginBottom: '20px',
             fontSize: '0.85rem',
             fontWeight: 600,
@@ -154,53 +178,55 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* Portal Role Selector: Only Customer & Admin */}
+        {/* Portal Role Selector Buttons with Glassmorphism */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
-          gap: '12px',
-          marginBottom: '24px'
+          gap: '14px',
+          marginBottom: '28px'
         }}>
           <button
             type="button"
             onClick={() => handleQuickDemo('customer')}
             className={`btn ${loginMode === 'customer' ? 'btn-primary' : 'btn-secondary'}`}
             style={{
-              padding: '14px',
-              borderRadius: '14px',
+              padding: '16px',
+              borderRadius: '16px',
               fontWeight: 800,
               fontSize: '0.95rem',
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px'
+              gap: '6px',
+              boxShadow: loginMode === 'customer' ? '0 10px 28px rgba(10,77,46,0.35)' : 'none'
             }}
           >
-            <User size={18} />
-            Customer
+            <User size={22} />
+            <span>Customer Portal</span>
           </button>
 
           <button
             type="button"
             onClick={() => handleQuickDemo('admin')}
-            className={`btn ${loginMode === 'admin' ? 'btn-primary' : 'btn-secondary'}`}
+            className={`btn ${loginMode === 'admin' ? 'btn-gold' : 'btn-secondary'}`}
             style={{
-              padding: '14px',
-              borderRadius: '14px',
+              padding: '16px',
+              borderRadius: '16px',
               fontWeight: 800,
               fontSize: '0.95rem',
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px'
+              gap: '6px',
+              boxShadow: loginMode === 'admin' ? '0 10px 28px rgba(255,184,0,0.4)' : 'none'
             }}
           >
-            <ShieldCheck size={18} />
-            Admin
+            <ShieldCheck size={22} />
+            <span>Admin Portal</span>
           </button>
         </div>
 
-        {/* Credentials Form */}
+        {/* Manual Login Form */}
         <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div className="input-group">
             <label className="input-label">EMAIL ADDRESS</label>
@@ -234,19 +260,19 @@ export default function LoginPage() {
               width: '100%',
               padding: '16px',
               fontSize: '1rem',
-              borderRadius: '14px',
+              borderRadius: '16px',
               fontWeight: 800,
-              marginTop: '8px'
+              marginTop: '6px'
             }}
           >
             {loading ? 'AUTHENTICATING...' : `LOG IN AS ${loginMode.toUpperCase()}`}
           </button>
         </form>
 
-        {/* Quick Demo Footer */}
-        <div style={{ textAlign: 'center', marginTop: '24px', paddingTop: '16px', borderTop: '1px solid rgba(10, 77, 46, 0.08)' }}>
-          <p style={{ fontSize: '0.8rem', color: '#4a6354' }}>
-            Click either <strong style={{ color: '#0A4D2E' }}>Customer</strong> or <strong style={{ color: '#0A4D2E' }}>Admin</strong> above for instant 1-click access!
+        {/* Footer info */}
+        <div style={{ textAlign: 'center', marginTop: '24px', paddingTop: '16px', borderTop: '1px solid rgba(10, 77, 46, 0.1)' }}>
+          <p style={{ fontSize: '0.8rem', color: '#4A6354', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+            <Lock size={14} color="#16A34A" /> Click <strong>Customer</strong> or <strong>Admin</strong> above for 1-click portal entry!
           </p>
         </div>
 
