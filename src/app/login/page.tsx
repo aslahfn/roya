@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Crown, User, ShieldCheck, ArrowRight, Sparkles, Lock, CheckCircle2 } from 'lucide-react';
 
 export default function LoginPage() {
   const [loginMode, setLoginMode] = useState<'customer' | 'admin'>('customer');
@@ -38,14 +37,14 @@ export default function LoginPage() {
         }
       } else {
         if (loginMode === 'customer') {
-          router.push('/setup-profile');
+          router.push('/');
         } else {
           router.push('/admin');
         }
       }
     } catch (err) {
       if (loginMode === 'customer') {
-        router.push('/setup-profile');
+        router.push('/');
       } else {
         router.push('/admin');
       }
@@ -66,7 +65,6 @@ export default function LoginPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: targetEmail, password: 'password123' }),
     })
-      .then((res) => res.json())
       .then(() => {
         if (role === 'customer') {
           router.push('/');
@@ -86,194 +84,126 @@ export default function LoginPage() {
 
   return (
     <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #0A4D2E 0%, #063821 50%, #042417 100%)',
       display: 'flex',
-      flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '40px 20px',
+      minHeight: '100vh',
+      padding: '20px',
+      background: 'var(--bg-primary)',
       position: 'relative',
       overflow: 'hidden'
     }}>
+      
+      {/* Background Blurs using user's blue accent color */}
+      <div className="blur-blob" style={{ width: '500px', height: '500px', top: '-100px', left: '-200px' }}></div>
+      <div className="blur-blob" style={{ width: '400px', height: '400px', bottom: '-150px', right: '-150px', background: '#60a5fa' }}></div>
 
-      {/* Floating Glassmorphism Blur Blobs */}
-      <div className="blur-blob blob-gold" style={{ width: '500px', height: '500px', top: '-10%', left: '-10%' }}></div>
-      <div className="blur-blob blob-emerald" style={{ width: '600px', height: '600px', bottom: '-15%', right: '-10%' }}></div>
-      <div className="blur-blob blob-mint" style={{ width: '400px', height: '400px', top: '40%', right: '15%' }}></div>
-
-      {/* Brand Crown Header */}
-      <Link href="/" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '32px', textDecoration: 'none', position: 'relative', zIndex: 10 }}>
-        <div className="royal-pulse" style={{
-          width: '64px',
-          height: '64px',
-          borderRadius: '50%',
-          background: 'linear-gradient(135deg, #FFC837 0%, #FFB800 50%, #D4AF37 100%)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 12px 32px rgba(255, 184, 0, 0.45)',
-          marginBottom: '12px'
-        }}>
-          <Crown size={36} color="#0A4D2E" strokeWidth={2.5} />
-        </div>
-        <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '2.2rem', fontWeight: 900, color: '#ffffff', letterSpacing: '-0.02em', textShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
-          ROYAL SUPERMARKET
-        </h1>
-        <div style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '6px',
-          background: 'rgba(255,184,0,0.2)',
-          border: '1px solid rgba(255,184,0,0.35)',
-          padding: '4px 14px',
-          borderRadius: '20px',
-          fontSize: '0.78rem',
-          color: '#FFB800',
-          fontWeight: 800,
-          marginTop: '6px'
-        }}>
-          <Sparkles size={14} />
-          <span>SYSTEM PORTAL AUTHENTICATION</span>
-        </div>
-      </Link>
-
-      {/* Ultra-Premium Glass Panel */}
       <div className="glass-panel animate-fade-in" style={{
         width: '100%',
-        maxWidth: '480px',
-        padding: '40px 36px',
-        background: 'rgba(255, 255, 255, 0.92)',
-        backdropFilter: 'blur(30px)',
-        WebkitBackdropFilter: 'blur(30px)',
-        boxShadow: '0 24px 60px rgba(0, 0, 0, 0.3)',
-        borderRadius: '28px',
+        maxWidth: '560px',
+        padding: '50px 40px',
+        textAlign: 'center',
         position: 'relative',
-        zIndex: 10,
-        border: '1px solid rgba(255, 255, 255, 0.6)'
+        zIndex: 1
       }}>
 
-        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0A4D2E', marginBottom: '6px' }}>
-            Choose Portal Access
-          </h2>
-          <p style={{ fontSize: '0.88rem', color: '#4A6354' }}>
-            Select your role to access Customer Store or Admin Dashboard
-          </p>
-        </div>
+        <h1 className="title" style={{ fontSize: '2.5rem', marginBottom: '8px' }}>
+          SYSTEM<br/><span className="text-accent">PORTAL</span>
+        </h1>
+        <p className="subtitle" style={{ marginBottom: '32px', fontSize: '0.9rem' }}>
+          SELECT PORTAL ROLE TO CONTINUE.
+        </p>
 
         {error && (
           <div style={{
-            background: '#FEE2E2',
-            border: '1px solid #EF4444',
-            color: '#B91C1C',
-            padding: '12px 16px',
-            borderRadius: '14px',
-            marginBottom: '20px',
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--accent-primary)',
+            color: 'var(--accent-primary)',
+            padding: '12px',
+            marginBottom: '24px',
             fontSize: '0.85rem',
             fontWeight: 600,
-            textAlign: 'center'
+            textTransform: 'uppercase'
           }}>
             {error}
           </div>
         )}
 
-        {/* Portal Role Selector Buttons with Glassmorphism */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '14px',
-          marginBottom: '28px'
-        }}>
+        {/* User's Original Style Role Options: Only Customer & Admin */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '32px' }}>
           <button
             type="button"
             onClick={() => handleQuickDemo('customer')}
-            className={`btn ${loginMode === 'customer' ? 'btn-primary' : 'btn-secondary'}`}
+            disabled={loading}
             style={{
-              padding: '16px',
-              borderRadius: '16px',
-              fontWeight: 800,
-              fontSize: '0.95rem',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '6px',
-              boxShadow: loginMode === 'customer' ? '0 10px 28px rgba(10,77,46,0.35)' : 'none'
+              background: loginMode === 'customer' ? 'var(--accent-primary)' : 'rgba(255, 255, 255, 0.6)',
+              color: loginMode === 'customer' ? '#ffffff' : 'var(--text-primary)',
+              border: '1px solid var(--accent-primary)',
+              padding: '20px 16px',
+              cursor: 'pointer',
+              textAlign: 'left',
+              transition: 'all 0.2s',
+              position: 'relative'
             }}
           >
-            <User size={22} />
-            <span>Customer Portal</span>
+            <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.2rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '4px' }}>CUSTOMER</h3>
+            <p style={{ fontSize: '0.75rem', opacity: 0.8, textTransform: 'uppercase' }}>PUBLIC STOREFRONT</p>
           </button>
 
           <button
             type="button"
             onClick={() => handleQuickDemo('admin')}
-            className={`btn ${loginMode === 'admin' ? 'btn-gold' : 'btn-secondary'}`}
+            disabled={loading}
             style={{
-              padding: '16px',
-              borderRadius: '16px',
-              fontWeight: 800,
-              fontSize: '0.95rem',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '6px',
-              boxShadow: loginMode === 'admin' ? '0 10px 28px rgba(255,184,0,0.4)' : 'none'
+              background: loginMode === 'admin' ? 'var(--accent-primary)' : 'rgba(255, 255, 255, 0.6)',
+              color: loginMode === 'admin' ? '#ffffff' : 'var(--text-primary)',
+              border: '1px solid var(--accent-primary)',
+              padding: '20px 16px',
+              cursor: 'pointer',
+              textAlign: 'left',
+              transition: 'all 0.2s',
+              position: 'relative'
             }}
           >
-            <ShieldCheck size={22} />
-            <span>Admin Portal</span>
+            <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.2rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '4px' }}>ADMIN</h3>
+            <p style={{ fontSize: '0.75rem', opacity: 0.8, textTransform: 'uppercase' }}>SYSTEM DASHBOARD</p>
           </button>
         </div>
 
         {/* Manual Login Form */}
-        <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div className="input-group">
-            <label className="input-label">EMAIL ADDRESS</label>
-            <input
-              type="email"
-              className="input-field"
-              placeholder={loginMode === 'customer' ? "customer@supermarket.com" : "admin@supermarket.com"}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="input-group">
-            <label className="input-label">PASSWORD</label>
-            <input
-              type="password"
-              className="input-field"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={loading}
-            style={{
-              width: '100%',
-              padding: '16px',
-              fontSize: '1rem',
-              borderRadius: '16px',
-              fontWeight: 800,
-              marginTop: '6px'
-            }}
-          >
-            {loading ? 'AUTHENTICATING...' : `LOG IN AS ${loginMode.toUpperCase()}`}
-          </button>
-        </form>
-
-        {/* Footer info */}
-        <div style={{ textAlign: 'center', marginTop: '24px', paddingTop: '16px', borderTop: '1px solid rgba(10, 77, 46, 0.1)' }}>
-          <p style={{ fontSize: '0.8rem', color: '#4A6354', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-            <Lock size={14} color="#16A34A" /> Click <strong>Customer</strong> or <strong>Admin</strong> above for 1-click portal entry!
+        <div style={{ borderTop: '1px solid var(--border-light)', paddingTop: '28px', textAlign: 'left' }}>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '16px', fontWeight: 600 }}>
+            MANUAL CREDENTIAL LOGIN:
           </p>
+          <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className="input-group">
+              <label className="input-label">EMAIL ADDRESS</label>
+              <input
+                type="email"
+                className="input-field"
+                placeholder={loginMode === 'customer' ? "customer@supermarket.com" : "admin@supermarket.com"}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="input-group">
+              <label className="input-label">PASSWORD</label>
+              <input
+                type="password"
+                className="input-field"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            <button type="submit" className="btn btn-primary" disabled={loading} style={{ width: '100%', marginTop: '8px' }}>
+              {loading ? 'AUTHENTICATING...' : `LOG IN AS ${loginMode.toUpperCase()}`}
+            </button>
+          </form>
         </div>
 
       </div>
