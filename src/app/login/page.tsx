@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Crown, User, ShieldCheck, MessageSquare } from 'lucide-react';
+import { Crown, ShoppingBag, User, ShieldCheck, MessageSquare, Sparkles } from 'lucide-react';
 
 export default function LoginPage() {
   const [authMethod, setAuthMethod] = useState<'otp' | 'email'>('otp');
@@ -67,7 +67,7 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const res = await fetch('/api/auth/login', {
+      await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -101,7 +101,7 @@ export default function LoginPage() {
       const targetEmail = email || (portalRole === 'customer' ? 'customer@supermarket.com' : 'superadmin@supermarket.com');
       const targetPass = password || 'password123';
 
-      const res = await fetch('/api/auth/login', {
+      await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: targetEmail, password: targetPass }),
@@ -163,7 +163,7 @@ export default function LoginPage() {
       overflow: 'hidden'
     }}>
 
-      {/* Navigation */}
+      {/* Top Left Navigation */}
       <div style={{ position: 'absolute', top: '24px', left: '24px', zIndex: 10 }}>
         <Link href="/" className="btn btn-secondary" style={{ padding: '10px 18px', fontSize: '0.85rem', fontWeight: 800 }}>
           ← Back to Storefront
@@ -211,7 +211,7 @@ export default function LoginPage() {
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#ffffff' }}>
-                💬 ROYAL OTP CODE DISPATCHED
+                💬 ROYA OTP CODE DISPATCHED
               </span>
               <button 
                 onClick={() => setShowSmsNotification(false)}
@@ -221,7 +221,7 @@ export default function LoginPage() {
               </button>
             </div>
             <p style={{ fontSize: '0.95rem', fontWeight: 700, margin: '4px 0 2px' }}>
-              Your Royal code is <span style={{ color: '#FEF08A', fontSize: '1.2rem', letterSpacing: '0.1em' }}>{generatedOtp}</span>
+              Your ROYA code is <span style={{ color: '#FEF08A', fontSize: '1.2rem', letterSpacing: '0.1em' }}>{generatedOtp}</span>
             </p>
             <p style={{ fontSize: '0.75rem', color: '#f0fdf4' }}>
               Target: {countryCode} {phone}
@@ -230,28 +230,57 @@ export default function LoginPage() {
         </div>
       )}
 
-      {/* Brand Header */}
+      {/* Brand Header with ANIMATED SUPERMARKET LOGO in correct centered position */}
       <Link href="/" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '28px', textDecoration: 'none', position: 'relative', zIndex: 1 }}>
-        <div style={{
-          width: '60px',
-          height: '60px',
-          borderRadius: '50%',
-          background: '#16A34A',
-          color: '#ffffff',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 8px 24px rgba(22, 163, 74, 0.35)',
-          marginBottom: '10px'
-        }}>
-          <Crown size={32} color="#ffffff" strokeWidth={2.5} />
+        
+        {/* Animated Supermarket Logo Badge */}
+        <div style={{ position: 'relative', marginBottom: '14px' }}>
+          
+          {/* Pulsing Outer Glow Ring */}
+          <div className="pulse-glow" style={{
+            position: 'absolute',
+            inset: '-6px',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #16A34A 0%, #EAB308 100%)',
+            opacity: 0.45,
+            filter: 'blur(10px)'
+          }}></div>
+
+          {/* Centered Animated Supermarket Logo */}
+          <div style={{
+            position: 'relative',
+            width: '72px',
+            height: '72px',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #16A34A 0%, #15803D 100%)',
+            color: '#ffffff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 12px 32px rgba(22, 163, 74, 0.4)',
+            border: '2.5px solid #ffffff'
+          }}>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Crown size={34} color="#FEF08A" strokeWidth={2.5} style={{ animation: 'bounceSlow 2s ease-in-out infinite' }} />
+              <ShoppingBag size={20} color="#ffffff" style={{ position: 'absolute', bottom: '-4px', right: '-4px' }} />
+            </div>
+          </div>
         </div>
-        <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '2rem', fontWeight: 900, color: '#16A34A', letterSpacing: '-0.02em' }}>
-          ROYAL SUPERMARKET
+
+        {/* Supermarket Name: ROYA SUPERMARKET */}
+        <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '2.4rem', fontWeight: 900, color: '#16A34A', letterSpacing: '-0.02em', textAlign: 'center' }}>
+          ROYA SUPERMARKET
         </h1>
-        <p style={{ fontSize: '0.88rem', color: '#166534', fontWeight: 600 }}>
+        <p style={{ fontSize: '0.88rem', color: '#166534', fontWeight: 700, marginTop: '2px' }}>
           Freshness Delivered to Your Doorstep
         </p>
+
+        <style>{`
+          @keyframes bounceSlow {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+          }
+        `}</style>
       </Link>
 
       {/* Main Login Card (White & Green) */}
@@ -272,7 +301,7 @@ export default function LoginPage() {
             Welcome Back!
           </h2>
           <p style={{ fontSize: '0.88rem', color: '#166534' }}>
-            Login or register to continue
+            Login or register to ROYA Supermarket
           </p>
         </div>
 
