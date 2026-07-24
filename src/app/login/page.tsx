@@ -94,9 +94,16 @@ export default function LoginPage() {
       overflow: 'hidden'
     }}>
       
-      {/* Background Blurs using user's blue accent color */}
+      {/* Top Left Navigation: Back to Storefront */}
+      <div style={{ position: 'absolute', top: '24px', left: '24px', zIndex: 10 }}>
+        <Link href="/" className="btn btn-secondary" style={{ padding: '10px 18px', fontSize: '0.85rem', textTransform: 'uppercase', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+          ← Back to Storefront
+        </Link>
+      </div>
+
+      {/* Background Blurs */}
       <div className="blur-blob" style={{ width: '500px', height: '500px', top: '-100px', left: '-200px' }}></div>
-      <div className="blur-blob" style={{ width: '400px', height: '400px', bottom: '-150px', right: '-150px', background: '#60a5fa' }}></div>
+      <div className="blur-blob" style={{ width: '400px', height: '400px', bottom: '-150px', right: '-150px', background: 'rgba(10, 77, 46, 0.2)' }}></div>
 
       <div className="glass-panel animate-fade-in" style={{
         width: '100%',
@@ -129,16 +136,17 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* User's Original Style Role Options: Only Customer & Admin */}
+        {/* Role Options: Customer & Admin */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '32px' }}>
           <button
             type="button"
             onClick={() => handleQuickDemo('customer')}
             disabled={loading}
             style={{
-              background: loginMode === 'customer' ? 'var(--accent-primary)' : 'rgba(255, 255, 255, 0.6)',
+              background: loginMode === 'customer' ? 'var(--accent-primary)' : 'rgba(255, 255, 255, 0.8)',
               color: loginMode === 'customer' ? '#ffffff' : 'var(--text-primary)',
-              border: '1px solid var(--accent-primary)',
+              border: '1.5px solid var(--accent-primary)',
+              borderRadius: 'var(--radius-md)',
               padding: '20px 16px',
               cursor: 'pointer',
               textAlign: 'left',
@@ -155,9 +163,10 @@ export default function LoginPage() {
             onClick={() => handleQuickDemo('admin')}
             disabled={loading}
             style={{
-              background: loginMode === 'admin' ? 'var(--accent-primary)' : 'rgba(255, 255, 255, 0.6)',
+              background: loginMode === 'admin' ? 'var(--accent-primary)' : 'rgba(255, 255, 255, 0.8)',
               color: loginMode === 'admin' ? '#ffffff' : 'var(--text-primary)',
-              border: '1px solid var(--accent-primary)',
+              border: '1.5px solid var(--accent-primary)',
+              borderRadius: 'var(--radius-md)',
               padding: '20px 16px',
               cursor: 'pointer',
               textAlign: 'left',
