@@ -1,0 +1,209 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id             String    @id @default(cuid())
+  name           String
+  email          String    @unique
+  hashedPassword String
+  role           String    // SUPER_ADMIN, PRICING_MANAGER, STORE_MANAGER, INVENTORY_MANAGER, ORDER_MANAGER, DELIVERY_MANAGER, CUSTOMER_SUPPORT, CUSTOMER
+  phone          String?
+  whatsapp       String?
+  branchId       String?
+  branch         Branch?   @relation(fields: [branchId], references: [id])
+  auditLogs      PriceAuditLog[]
+  paymentMethods PaymentMethod[]
+  orders         Order[]         @relation(name: "UserOrders")
+  deliveries     Order[]         @relation(name: "DriverOrders")
+  addresses      CustomerAddress[]
+  cart           Cart?
+}
+
+model Branch {
+  id             String    @id @default(cuid())
+  name           String
+  location       String
+  users          User[]
+  inventory      ProductBranch[]
+  pricing        Pricing[]
+  auditLogs      PriceAuditLog[]
+}
+
+model Product {
+  id                  String    @id @default(cuid())
+  name                String
+  description         String?
+  images              String?   // JSON string or comma-separated URLs
+  category            String
+  subcategory         String?
+  brand               String
+  barcode             String?   @unique
+  sku                 String    @unique
+  weight              Float?
+  unit                String?
+  ingredients         String?
+  nutrition           String?
+  countryOfOrigin     String?
+  storageInstructions String?
+  expiryDate          DateTime?
+  
+  // New Management Fields
+  isFeatured          Boolean   @default(false)
+  isBestSeller        Boolean   @default(false)
+  tags                String?
+  isActive            Boolean   @default(true)
+  availabilityStatus  String    @default("IN_STOCK") // 'IN_STOCK', 'OUT_OF_STOCK', 'DISCONTINUED'
+
+  inventory      ProductBranch[]
+  pricing        Pricing[]
+  auditLogs      PriceAuditLog[]
+  cartItems      CartItem[]
+  orderItems     OrderItem[]
+}
+
+model ProductBranch {
+  id             String    @id @default(cuid())
+  productId      String
+  branchId       String
+  stockQuantity  Int       @default(0)
+  availability   Boolean   @default(true)
+  status         String    @default("IN_STOCK")
+
+  product        Product   @relation(fields: [productId], references: [id])
+  branch         Branch    @relation(fields: [branchId], references: [id])
+
+  @@unique([productId, branchId])
+}
+
+model Pricing {
+  id             String    @id @default(cuid())
+  productId      String
+  branchId       String
+  costPrice      Float
+  sellingPrice   Float
+  discountPrice  Float?
+  startDate      DateTime?
+  endDate        DateTime?
+
+  product        Product   @relation(fields: [productId], references: [id])
+  branch         Branch    @relation(fields: [branchId], references: [id])
+
+  @@unique([productId, branchId])
+}
+
+model PriceAuditLog {
+  id             String    @id @default(cuid())
+  userId         String
+  productId      String
+  branchId       String
+  oldPrice       Float?
+  newPrice       Float
+  date           DateTime  @default(now())
+  reason         String?
+
+  user           User      @relation(fields: [userId], references: [id])
+  product        Product   @relation(fields: [productId], references: [id])
+  branch         Branch    @relation(fields: [branchId], references: [id])
+}
+
+model Settings {
+  key            String    @id
+  value          String
+}
+
+model PaymentMethod {
+  id             String    @id @default(cuid())
+  userId         String
+  cardType       String    // Visa, MasterCard, etc.
+  last4          String
+  expiryMonth    String
+  expiryYear     String
+  cardholderName String
+  createdAt      DateTime  @default(now())
+
+  // Note: We do not store the full PAN or CVV for security reasons
+  user           User      @relation(fields: [userId], references: [id])
+  orders         Order[]
+}
+
+model CustomerAddress {
+  id           String  @id @default(cuid())
+  userId       String
+  fullName     String
+  phone        String
+  whatsapp     String?
+  houseNumber  String
+  buildingName String?
+  street       String
+  area         String
+  city         String
+  state        String
+  postalCode   String?
+  landmark     String?
+  latitude     Float?
+  longitude    Float?
+  placeId      String?
+  isDefault    Boolean @default(false)
+  createdAt    DateTime @default(now())
+
+  user         User    @relation(fields: [userId], references: [id])
+}
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id])
+  items     CartItem[]
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  productId String
+  quantity  Int      @default(1)
+
+  cart      Cart     @relation(fields: [cartId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+}
+
+model Order {
+  id                    String      @id @default(cuid())
+  userId                String
+  paymentMethodId       String?
+  driverId              String?     
+  totalAmount           Float
+  deliveryAddress       String?
+  latitude              Float?
+  longitude             Float?
+  deliveryNotes         String?
+  otp                   String?
+  estimatedDeliveryTime DateTime?
+  status                String      @default("RECEIVED") // RECEIVED, CONFIRMED, PREPARING, PACKED, OUT_FOR_DELIVERY, DELIVERED, CANCELLED
+  paymentStatus         String      @default("PENDING") // PENDING, PAID, FAILED, COD
+  createdAt             DateTime    @default(now())
+  
+  user                  User           @relation(name: "UserOrders", fields: [userId], references: [id])
+  driver                User?          @relation(name: "DriverOrders", fields: [driverId], references: [id])
+  paymentMethod         PaymentMethod? @relation(fields: [paymentMethodId], references: [id])
+  items                 OrderItem[]
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int
+  price     Float
+
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id])
+}
