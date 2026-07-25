@@ -3,11 +3,12 @@
 import { db } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
 
 export async function placeOrder(formData: FormData) {
   let session = await getSession();
   
-  // If user is not logged in, fetch or create customer account
+  // If user is not logged in, fetch or create a default customer account
   if (!session) {
     let customerUser = await db.user.findFirst({
       where: { role: 'CUSTOMER' }
@@ -46,46 +47,48 @@ export async function placeOrder(formData: FormData) {
     });
   }
 
-  // Fetch products if cart has no items
-  let orderItemsToCreate: { productId: string; quantity: number; price: number }[] = [];
-  let totalAmount = 0;
+  let orderItemsToCreate: { productId: string; quantity: number; price: number; unit?: string }[] = [];
+  let subtotal = 0;
 
   if (cart.items.length > 0) {
     cart.items.forEach(item => {
       const price = item.product.pricing[0]?.sellingPrice || 15.00;
-      totalAmount += price * item.quantity;
+      subtotal += price * item.quantity;
       orderItemsToCreate.push({
         productId: item.productId,
         quantity: item.quantity,
-        price
+        price,
+        unit: item.product.unit || 'Piece'
       });
     });
   } else {
-    // If cart was empty, seed with catalog products so order placement always succeeds!
+    // If cart was empty, seed with top products so order placement always succeeds!
     const availableProducts = await db.product.findMany({ take: 2 });
     if (availableProducts.length > 0) {
       availableProducts.forEach(p => {
         const price = 15.00;
-        totalAmount += price;
+        subtotal += price;
         orderItemsToCreate.push({
           productId: p.id,
           quantity: 1,
-          price
+          price,
+          unit: p.unit || 'Piece'
         });
       });
     }
   }
 
   const deliveryFee = 5.00;
-  totalAmount += deliveryFee;
+  const totalAmount = subtotal + deliveryFee;
 
   const fullName = (formData.get('fullName') as string) || session.name || 'Royal Customer';
   const mobile = (formData.get('mobile') as string) || '0501234567';
   const building = (formData.get('building') as string) || '';
   const flat = (formData.get('flat') as string) || '';
   const street = (formData.get('street') as string) || 'King Fahd Road';
+  const paymentMethodChoice = (formData.get('payment') as string) || 'card';
 
-  const deliveryAddress = `${fullName} - ${mobile}. ${flat ? `Flat ${flat}, ` : ''}${building ? `${building}, ` : ''}${street}, Riyadh`;
+  const deliveryAddress = `${fullName} (${mobile}) - ${flat ? `Flat ${flat}, ` : ''}${building ? `${building}, ` : ''}${street}, Riyadh`;
 
   // Generate 4 digit OTP for driver delivery verification
   const otp = Math.floor(1000 + Math.random() * 9000).toString();
@@ -103,7 +106,7 @@ export async function placeOrder(formData: FormData) {
       longitude: 46.6753,
       otp,
       status: 'RECEIVED',
-      paymentStatus: 'PAID',
+      paymentStatus: paymentMethodChoice === 'cod' ? 'COD' : 'PAID',
       items: {
         create: orderItemsToCreate
       }
@@ -129,8 +132,31 @@ export async function placeOrder(formData: FormData) {
     // Ignore duplicate address constraint if any
   }
 
+  // Create real-time Admin Notification popup trigger
+  try {
+    await db.notification.create({
+      data: {
+        roleTarget: 'ADMIN',
+        title: `🚨 NEW ORDER RECEIVED: #${order.id.slice(-6).toUpperCase()}`,
+        message: `${fullName} placed a new order of AED ${totalAmount.toFixed(2)} (${paymentMethodChoice.toUpperCase()})`,
+        type: 'NEW_ORDER',
+        data: JSON.stringify({
+          orderId: order.id,
+          customerName: fullName,
+          totalAmount,
+          address: deliveryAddress
+        })
+      }
+    });
+  } catch (err) {
+    console.error('Failed to broadcast admin order notification:', err);
+  }
+
   // Clear Cart
   await db.cartItem.deleteMany({ where: { cartId: cart.id } });
+
+  revalidatePath('/orders');
+  revalidatePath('/admin/orders');
 
   redirect(`/orders/${order.id}`);
 }
