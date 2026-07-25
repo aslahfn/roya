@@ -269,3 +269,48 @@ a:hover {
 .badge-warning { background: #fef3c7; color: #b45309; }
 .badge-error { background: #fee2e2; color: #b91c1c; }
 .badge-neutral { background: #f0fdf4; color: #16a34a; }
+
+/* Mobile View Container & Layout Utilities */
+.mobile-app-wrapper {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background-color: #ffffff;
+  position: relative;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 640px) {
+  .mobile-app-wrapper {
+    max-width: 100%;
+    box-shadow: none;
+  }
+}
+
+/* Hide scrollbar for horizontal touch scrolling */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Mobile Product Grid (2 columns) */
+.mobile-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+/* Touch feedback class */
+.touch-active:active {
+  transform: scale(0.96);
+  transition: transform 0.1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Bottom Nav Padding for Pages */
+.has-bottom-nav {
+  padding-bottom: 84px !important;
+}
+

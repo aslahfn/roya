@@ -2,6 +2,8 @@ import { getSession } from '@/lib/auth';
 import { db } from '@/lib/db';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { RoyalHeader } from '@/components/layout/RoyalHeader';
+import { ArrowLeft, Package, Clock, CheckCircle2, ChevronRight } from 'lucide-react';
 
 export default async function CustomerOrdersPage() {
   const session = await getSession();
@@ -21,73 +23,145 @@ export default async function CustomerOrdersPage() {
   });
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', padding: '60px 20px', position: 'relative', overflow: 'hidden' }}>
-      <div className="blur-blob" style={{ width: '400px', height: '400px', top: '5%', left: '-5%' }}></div>
-      <div className="blur-blob" style={{ width: '300px', height: '300px', bottom: '10%', right: '-5%', background: 'var(--accent-primary)' }}></div>
+    <div style={{ background: '#f8fafc', minHeight: '100vh', paddingBottom: '100px' }}>
+      <RoyalHeader session={session} />
 
-      <div style={{ maxWidth: '900px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
-        <header style={{ marginBottom: '40px', borderBottom: '1px solid var(--border-light)', paddingBottom: '24px' }}>
-          <Link href="/" style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '16px', display: 'inline-block' }}>← BACK TO STORE</Link>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-            <h1 className="title" style={{ fontSize: '3rem', margin: 0, lineHeight: 1 }}>MY<br/><span className="text-accent">ORDERS</span></h1>
-          </div>
-        </header>
+      <div style={{ padding: '14px 14px 0' }}>
+        {/* Navigation Breadcrumb */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+          <Link href="/" style={{ color: '#16a34a', display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none', fontSize: '0.82rem', fontWeight: 700 }}>
+            <ArrowLeft size={16} /> Back to Store
+          </Link>
+        </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <h1 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#0F172A', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span>My Orders</span>
+          <span style={{ fontSize: '0.8rem', background: '#dcfce7', color: '#15803d', padding: '2px 8px', borderRadius: '12px', fontWeight: 800 }}>
+            {orders.length} orders
+          </span>
+        </h1>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {orders.length === 0 ? (
-            <div className="glass-panel" style={{ padding: '60px', textAlign: 'center' }}>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '16px' }}>No orders yet</h2>
-              <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>You haven't placed any orders. Start shopping to see your history here.</p>
-              <Link href="/" className="btn btn-primary">BROWSE STORE</Link>
+            <div style={{
+              background: '#ffffff',
+              borderRadius: '20px',
+              padding: '40px 20px',
+              textAlign: 'center',
+              border: '1px solid rgba(22, 163, 74, 0.15)',
+              boxShadow: '0 4px 14px rgba(0,0,0,0.04)'
+            }}>
+              <Package size={48} color="#16a34a" style={{ marginBottom: '12px' }} />
+              <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0F172A', marginBottom: '8px' }}>No Orders Placed Yet</h2>
+              <p style={{ fontSize: '0.82rem', color: '#64748b', marginBottom: '20px' }}>Your completed orders & live delivery tracking will appear here.</p>
+              <Link href="/" style={{
+                display: 'inline-block',
+                background: '#16a34a',
+                color: '#ffffff',
+                padding: '12px 24px',
+                borderRadius: '16px',
+                fontWeight: 800,
+                fontSize: '0.88rem',
+                textDecoration: 'none'
+              }}>
+                Browse Products
+              </Link>
             </div>
           ) : (
             orders.map(order => (
-              <div key={order.id} className="glass-panel" style={{ padding: '32px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-light)', paddingBottom: '16px', marginBottom: '24px' }}>
+              <div
+                key={order.id}
+                style={{
+                  background: '#ffffff',
+                  borderRadius: '16px',
+                  padding: '14px',
+                  border: '1px solid rgba(22, 163, 74, 0.15)',
+                  boxShadow: '0 4px 12px rgba(6, 56, 33, 0.04)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px'
+                }}
+              >
+                {/* Top Row: Order ID & Date */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>Order ID</div>
-                    <div style={{ fontWeight: 800, fontFamily: 'monospace', fontSize: '1.25rem' }}>#{order.id.slice(-6).toUpperCase()}</div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>Date Placed</div>
-                    <div style={{ fontWeight: 600 }}>{order.createdAt.toLocaleDateString()}</div>
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '24px', marginBottom: '24px' }}>
-                  <div>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>Status</div>
-                    <div className={`badge ${order.status === 'DELIVERED' ? 'badge-success' : 'badge-warning'}`} style={{ marginTop: '8px' }}>
-                      {order.status.replace(/_/g, ' ')}
+                    <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 700 }}>ORDER NUMBER</div>
+                    <div style={{ fontWeight: 900, fontFamily: 'monospace', fontSize: '0.95rem', color: '#0A4D2E' }}>
+                      #{order.id.slice(-6).toUpperCase()}
                     </div>
                   </div>
-                  <div>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>Total Amount</div>
-                    <div style={{ fontWeight: 800, fontSize: '1.25rem', marginTop: '4px' }}>AED {order.totalAmount.toFixed(2)}</div>
-                  </div>
-                  <div style={{ textAlign: 'right', alignSelf: 'center' }}>
-                    <Link href={`/orders/${order.id}`} className="btn btn-primary" style={{ padding: '12px 24px', fontSize: '0.85rem' }}>
-                      TRACK / VIEW OTP →
-                    </Link>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 700 }}>DATE</div>
+                    <div style={{ fontWeight: 700, fontSize: '0.82rem', color: '#334155' }}>
+                      {order.createdAt.toLocaleDateString()}
+                    </div>
                   </div>
                 </div>
 
-                <div style={{ background: 'rgba(0,0,0,0.02)', padding: '16px', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600, marginBottom: '12px' }}>Items ({order.items.length})</div>
-                  <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '8px' }}>
-                    {order.items.map((item, idx) => (
-                      <div key={idx} style={{ flexShrink: 0, width: '200px', display: 'flex', alignItems: 'center', gap: '12px', background: '#fff', padding: '8px', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
-                        <div style={{ width: '40px', height: '40px', background: 'var(--bg-secondary)', borderRadius: '4px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>
-                          📦
-                        </div>
-                        <div style={{ overflow: 'hidden' }}>
-                          <div style={{ fontWeight: 600, fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.product.name}</div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Qty: {item.quantity}</div>
-                        </div>
-                      </div>
-                    ))}
+                {/* Status & Price Row */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  background: '#f8fafc',
+                  padding: '10px 12px',
+                  borderRadius: '12px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span className={`badge ${order.status === 'DELIVERED' ? 'badge-success' : 'badge-warning'}`} style={{ fontSize: '0.7rem' }}>
+                      {order.status.replace(/_/g, ' ')}
+                    </span>
+                  </div>
+                  <div style={{ fontWeight: 900, fontSize: '1rem', color: '#0A4D2E' }}>
+                    AED {order.totalAmount.toFixed(2)}
                   </div>
                 </div>
+
+                {/* Horizontal Scroll of Item Thumbnails */}
+                <div className="no-scrollbar" style={{ display: 'flex', gap: '8px', overflowX: 'auto', padding: '2px 0' }}>
+                  {order.items.map((item, idx) => (
+                    <div key={idx} style={{
+                      flexShrink: 0,
+                      background: '#ffffff',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '10px',
+                      padding: '6px 10px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}>
+                      <span style={{ fontSize: '1.2rem' }}>📦</span>
+                      <div>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0F172A', maxWidth: '120px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {item.product.name}
+                        </div>
+                        <div style={{ fontSize: '0.68rem', color: '#64748b' }}>Qty: {item.quantity}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* View Details / OTP Link */}
+                <Link
+                  href={`/orders/${order.id}`}
+                  style={{
+                    background: '#16a34a',
+                    color: '#ffffff',
+                    padding: '10px',
+                    borderRadius: '12px',
+                    fontWeight: 800,
+                    fontSize: '0.82rem',
+                    textDecoration: 'none',
+                    textAlign: 'center',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  <span>Track Delivery & View OTP</span>
+                  <ChevronRight size={16} />
+                </Link>
               </div>
             ))
           )}

@@ -1,12 +1,20 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { SplashScreen } from '@/components/layout/SplashScreen';
 import { LanguageProvider } from '@/context/LanguageContext';
 import { WhatsAppSupport } from '@/components/layout/WhatsAppSupport';
+import { MobileNav } from '@/components/layout/MobileNav';
 
 export const metadata: Metadata = {
-  title: "Royal Supermarket | Freshness Delivered to Your Doorstep",
-  description: "Royal Supermarket online grocery platform",
+  title: "Royal Supermarket | Mobile Grocery Delivery",
+  description: "Royal Supermarket online mobile grocery platform",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
@@ -19,8 +27,11 @@ export default function RootLayout({
       <body>
         <LanguageProvider>
           <SplashScreen />
-          {children}
-          <WhatsAppSupport />
+          <div className="mobile-app-wrapper has-bottom-nav">
+            {children}
+            <WhatsAppSupport />
+            <MobileNav />
+          </div>
         </LanguageProvider>
       </body>
     </html>

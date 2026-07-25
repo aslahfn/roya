@@ -25,7 +25,7 @@ export function WhatsAppSupport({ phoneNumber = '+966500000000', orderId, orderT
   };
 
   return (
-    <div style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 999 }}>
+    <div style={{ position: 'fixed', bottom: '84px', right: '16px', zIndex: 999 }}>
       
       {/* Expanded WhatsApp Quick Chat Card */}
       {open && (

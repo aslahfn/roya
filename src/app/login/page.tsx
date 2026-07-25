@@ -164,8 +164,8 @@ export default function LoginPage() {
     }}>
 
       {/* Top Left Navigation */}
-      <div style={{ position: 'absolute', top: '24px', left: '24px', zIndex: 10 }}>
-        <Link href="/" className="btn btn-secondary" style={{ padding: '10px 18px', fontSize: '0.85rem', fontWeight: 800 }}>
+      <div style={{ width: '100%', maxWidth: '460px', marginBottom: '12px', zIndex: 10 }}>
+        <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#16a34a', fontSize: '0.82rem', fontWeight: 800, textDecoration: 'none', background: '#f0fdf4', padding: '8px 14px', borderRadius: '12px', border: '1px solid rgba(22,163,74,0.2)' }}>
           ← Back to Storefront
         </Link>
       </div>
