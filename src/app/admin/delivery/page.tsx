@@ -2,6 +2,8 @@ import { db } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 import { DeliveryDispatchBoard } from './components/DeliveryDispatchBoard';
 
+export const dynamic = 'force-dynamic';
+
 export default async function DeliveryDispatchPage() {
   const session = await getSession();
   

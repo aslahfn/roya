@@ -5,6 +5,8 @@ import { redirect } from 'next/navigation';
 import { RoyalHeader } from '@/components/layout/RoyalHeader';
 import { ArrowLeft, Package, Clock, CheckCircle2, ChevronRight } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default async function CustomerOrdersPage() {
   const session = await getSession();
   
