@@ -9,7 +9,8 @@ export async function GET(req: NextRequest) {
     // Check global settings for customer app mode
     const modeSetting = await db.settings.findUnique({
       where: { key: 'CUSTOMER_APP_MODE' },
-    });
+    }).catch(() => null);
+
     const isPrivateStore = modeSetting?.value === 'PRIVATE';
 
     const products = await db.product.findMany({
@@ -25,35 +26,33 @@ export async function GET(req: NextRequest) {
 
     // Format products and redact pricing where necessary
     const formattedProducts = products.map((product) => {
-      // Create a base product object without the raw pricing array
       const { pricing, ...restProduct } = product;
 
       let redactedPricing = null;
 
       if (isPricingAuthorized) {
-        // Authorized admins see all pricing details
         redactedPricing = pricing;
       } else if (session?.role === 'CUSTOMER' || (!session && !isPrivateStore)) {
-        // Customers see prices in Public mode, or if they are logged in.
-        // They only see sellingPrice, not costPrice or discount structure.
         redactedPricing = pricing.map(p => ({
           branchId: p.branchId,
           sellingPrice: p.sellingPrice,
           discountPrice: p.discountPrice,
         }));
       }
-      
-      // If none of the above conditions are met, pricing remains completely hidden
 
       return {
         ...restProduct,
-        pricing: redactedPricing, // null if unauthorized
+        pricing: redactedPricing,
       };
     });
 
     return NextResponse.json(formattedProducts);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Products fetch error', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ 
+      error: error?.message || String(error), 
+      stack: error?.stack,
+      name: error?.name 
+    }, { status: 500 });
   }
 }
