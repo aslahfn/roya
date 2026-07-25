@@ -270,21 +270,13 @@ a:hover {
 .badge-error { background: #fee2e2; color: #b91c1c; }
 .badge-neutral { background: #f0fdf4; color: #16a34a; }
 
-/* Mobile View Container & Layout Utilities */
+/* Responsive App Layout Container */
 .mobile-app-wrapper {
-  max-width: 480px;
+  max-width: 1400px;
   margin: 0 auto;
   min-height: 100vh;
   background-color: #ffffff;
   position: relative;
-  box-shadow: 0 0 40px rgba(0, 0, 0, 0.08);
-}
-
-@media (max-width: 640px) {
-  .mobile-app-wrapper {
-    max-width: 100%;
-    box-shadow: none;
-  }
 }
 
 /* Hide scrollbar for horizontal touch scrolling */
@@ -296,11 +288,64 @@ a:hover {
   scrollbar-width: none;
 }
 
-/* Mobile Product Grid (2 columns) */
-.mobile-grid-2 {
+/* Responsive Product Grid */
+.responsive-product-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .responsive-product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-product-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 20px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .responsive-product-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 20px;
+  }
+}
+
+/* Mobile vs Desktop Display Utilities */
+.mobile-only {
+  display: flex !important;
+}
+.desktop-only {
+  display: none !important;
+}
+
+@media (min-width: 768px) {
+  .mobile-only {
+    display: none !important;
+  }
+  .desktop-only {
+    display: flex !important;
+  }
+  .desktop-only-block {
+    display: block !important;
+  }
+  .has-bottom-nav {
+    padding-bottom: 0px !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .has-bottom-nav {
+    padding-bottom: 84px !important;
+  }
+  .desktop-only-block {
+    display: none !important;
+  }
 }
 
 /* Touch feedback class */
@@ -309,8 +354,4 @@ a:hover {
   transition: transform 0.1s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Bottom Nav Padding for Pages */
-.has-bottom-nav {
-  padding-bottom: 84px !important;
-}
 

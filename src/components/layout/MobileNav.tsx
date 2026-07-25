@@ -16,7 +16,7 @@ export function MobileNav() {
   ];
 
   return (
-    <nav style={{
+    <nav className="mobile-only" style={{
       position: 'fixed',
       bottom: 0,
       left: 0,
