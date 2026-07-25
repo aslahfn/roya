@@ -48,11 +48,11 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(formattedProducts);
   } catch (error: any) {
-    console.error('Products fetch error', error);
     return NextResponse.json({ 
-      error: error?.message || String(error), 
-      stack: error?.stack,
-      name: error?.name 
-    }, { status: 500 });
+      isDiagnosticError: true,
+      errorMsg: error?.message || String(error), 
+      errorStack: error?.stack,
+      errorName: error?.name 
+    }, { status: 200 });
   }
 }
