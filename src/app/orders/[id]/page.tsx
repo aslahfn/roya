@@ -1,6 +1,8 @@
 import { getSession } from '@/lib/auth';
 import { db } from '@/lib/db';
 import Link from 'next/link';
+import { RoyalHeader } from '@/components/layout/RoyalHeader';
+import { ArrowLeft, ShieldCheck, Truck, KeyRound, MapPin, Clock, CheckCircle2 } from 'lucide-react';
 
 export default async function OrderTrackingPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
@@ -16,20 +18,32 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
 
   if (!order || (session?.role === 'CUSTOMER' && order.userId !== session.userId)) {
     return (
-      <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}>
-        <div className="glass-panel" style={{ padding: '60px', textAlign: 'center' }}>
-          <h1 className="title">Order Not Found</h1>
-          <p className="subtitle">This order does not exist or you do not have permission to view it.</p>
-          <Link href="/" className="btn btn-primary" style={{ marginTop: '24px' }}>Back to Store</Link>
+      <div style={{ background: '#f8fafc', minHeight: '100vh' }}>
+        <RoyalHeader session={session} />
+        <div style={{ padding: '60px 16px', textAlign: 'center' }}>
+          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0F172A', marginBottom: '8px' }}>Order Not Found</h2>
+          <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '24px' }}>This order does not exist or you do not have permission to view it.</p>
+          <Link href="/" style={{
+            display: 'inline-block',
+            background: '#16a34a',
+            color: '#ffffff',
+            padding: '12px 28px',
+            borderRadius: '16px',
+            fontWeight: 800,
+            fontSize: '0.9rem',
+            textDecoration: 'none'
+          }}>
+            Back to Store
+          </Link>
         </div>
       </div>
     );
   }
 
-  // Delivery Stages from PRD
+  // Delivery Stages
   const stages = [
-    { key: 'RECEIVED', label: 'Order Received', active: true },
-    { key: 'CONFIRMED', label: 'Order Confirmed', active: ['CONFIRMED', 'PREPARING', 'PACKED', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(order.status) },
+    { key: 'RECEIVED', label: 'Received', active: true },
+    { key: 'CONFIRMED', label: 'Confirmed', active: ['CONFIRMED', 'PREPARING', 'PACKED', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(order.status) },
     { key: 'PREPARING', label: 'Preparing', active: ['PREPARING', 'PACKED', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(order.status) },
     { key: 'PACKED', label: 'Packed', active: ['PACKED', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(order.status) },
     { key: 'OUT_FOR_DELIVERY', label: 'Out for Delivery', active: ['OUT_FOR_DELIVERY', 'DELIVERED'].includes(order.status) },
@@ -37,78 +51,166 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
   ];
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', padding: '60px 20px', position: 'relative', overflow: 'hidden' }}>
-      <div className="blur-blob" style={{ width: '400px', height: '400px', top: '5%', left: '-5%' }}></div>
-      <div className="blur-blob" style={{ width: '300px', height: '300px', bottom: '10%', right: '-5%', background: 'var(--accent-primary)' }}></div>
+    <div style={{ background: '#f8fafc', minHeight: '100vh', paddingBottom: '90px' }}>
+      <RoyalHeader session={session} />
 
-      <div style={{ maxWidth: '900px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
-        <header style={{ marginBottom: '40px', borderBottom: '1px solid var(--border-light)', paddingBottom: '24px' }}>
-          <Link href="/" style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '16px', display: 'inline-block' }}>← BACK TO STORE</Link>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-            <h1 className="title" style={{ fontSize: '3rem', margin: 0, lineHeight: 1 }}>ORDER<br/><span className="text-accent">TRACKING</span></h1>
-            <div style={{ textAlign: 'right', display: 'flex', gap: '40px' }}>
-              {order.otp && (
-                <div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 800 }}>Delivery OTP</div>
-                  <div style={{ fontWeight: 800, fontFamily: 'monospace', fontSize: '1.5rem', color: 'var(--accent-primary)' }}>{order.otp}</div>
-                </div>
-              )}
-              <div>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>Order ID</div>
-                <div style={{ fontWeight: 700, fontFamily: 'monospace', fontSize: '1.25rem' }}>#{order.id.slice(-6).toUpperCase()}</div>
+      <div style={{ padding: '14px 14px 0' }}>
+        {/* Navigation Breadcrumb */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+          <Link href="/orders" style={{ color: '#16a34a', display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none', fontSize: '0.82rem', fontWeight: 700 }}>
+            <ArrowLeft size={16} /> My Orders
+          </Link>
+        </div>
+
+        {/* Order Header Info */}
+        <div style={{
+          background: '#ffffff',
+          borderRadius: '16px',
+          padding: '14px',
+          border: '1px solid rgba(22, 163, 74, 0.15)',
+          boxShadow: '0 4px 12px rgba(6, 56, 33, 0.04)',
+          marginBottom: '12px'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <div>
+              <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 700 }}>ORDER ID</div>
+              <div style={{ fontWeight: 900, fontFamily: 'monospace', fontSize: '1.1rem', color: '#0A4D2E' }}>
+                #{order.id.slice(-8).toUpperCase()}
+              </div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 700 }}>TOTAL PAID</div>
+              <div style={{ fontWeight: 900, fontSize: '1.1rem', color: '#16a34a' }}>
+                AED {order.totalAmount.toFixed(2)}
               </div>
             </div>
           </div>
-        </header>
 
-        {/* Live Map Placeholder (Only active if Out For Delivery) */}
-        <div className="glass-panel" style={{ 
-          height: '350px', 
-          marginBottom: '40px', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          background: order.status === 'OUT_FOR_DELIVERY' ? 'linear-gradient(135deg, rgba(224, 242, 254, 0.8), rgba(186, 230, 253, 0.8))' : 'linear-gradient(135deg, rgba(248, 250, 252, 0.8), rgba(226, 232, 240, 0.8))',
-          backgroundImage: 'radial-gradient(var(--border-light) 2px, transparent 2px)',
-          backgroundSize: '30px 30px'
-        }}>
-          <div style={{ textAlign: 'center', background: '#ffffff', padding: '24px', borderRadius: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}>
-            {order.status === 'OUT_FOR_DELIVERY' ? (
-              <>
-                <div style={{ fontSize: '3rem', marginBottom: '8px' }}>🚚</div>
-                <div style={{ fontWeight: 700, color: 'var(--accent-primary)' }}>Driver is approaching!</div>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Live GPS Tracking Active</div>
-              </>
-            ) : (
-              <>
-                <div style={{ fontSize: '3rem', marginBottom: '8px' }}>📍</div>
-                <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Live GPS Tracking</div>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Available when out for delivery</div>
-              </>
-            )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: '#64748b' }}>
+            <Clock size={14} color="#16a34a" />
+            <span>Placed on {new Date(order.createdAt).toLocaleDateString()} at {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
           </div>
         </div>
 
+        {/* PROMINENT DELIVERY OTP VERIFICATION CARD */}
+        {order.otp && (
+          <div style={{
+            background: 'linear-gradient(135deg, #0A4D2E 0%, #063821 100%)',
+            borderRadius: '20px',
+            padding: '18px 16px',
+            color: '#ffffff',
+            marginBottom: '14px',
+            boxShadow: '0 8px 24px rgba(10, 77, 46, 0.25)',
+            border: '2px solid #FFB800',
+            position: 'relative',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '10px',
+              borderBottom: '1px solid rgba(255,255,255,0.12)',
+              paddingBottom: '10px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <KeyRound size={20} color="#FFB800" />
+                <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#ffffff', letterSpacing: '0.04em' }}>
+                  DELIVERY OTP CODE
+                </span>
+              </div>
+              <span style={{ background: 'rgba(255,184,0,0.2)', color: '#FFB800', fontSize: '0.68rem', fontWeight: 800, padding: '2px 8px', borderRadius: '10px' }}>
+                CONFIRMATION KEY
+              </span>
+            </div>
+
+            <div style={{ textAlign: 'center', padding: '8px 0' }}>
+              <div style={{ fontSize: '0.75rem', color: '#DCFCE7', fontWeight: 600, marginBottom: '4px' }}>
+                Share this 4-digit code with your driver upon arrival:
+              </div>
+              <div style={{
+                fontSize: '2.8rem',
+                fontWeight: 900,
+                fontFamily: 'monospace',
+                letterSpacing: '0.2em',
+                color: '#FFB800',
+                background: 'rgba(0,0,0,0.3)',
+                display: 'inline-block',
+                padding: '6px 24px',
+                borderRadius: '16px',
+                border: '1px stroke rgba(255,184,0,0.4)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+              }}>
+                {order.otp}
+              </div>
+            </div>
+
+            <div style={{ fontSize: '0.72rem', color: '#e2e8f0', textAlign: 'center', marginTop: '8px', opacity: 0.9 }}>
+              🛡️ The driver requires this OTP to complete & verify your delivery.
+            </div>
+          </div>
+        )}
+
+        {/* Live Tracking Map Placeholder */}
+        <div style={{
+          background: order.status === 'OUT_FOR_DELIVERY' ? 'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)' : '#ffffff',
+          borderRadius: '16px',
+          padding: '24px 16px',
+          marginBottom: '14px',
+          textAlign: 'center',
+          border: '1px solid rgba(22, 163, 74, 0.15)',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
+        }}>
+          {order.status === 'OUT_FOR_DELIVERY' ? (
+            <>
+              <div style={{ fontSize: '2.5rem', marginBottom: '6px' }}>🚚</div>
+              <div style={{ fontWeight: 800, color: '#0284c7', fontSize: '1rem' }}>Driver is On The Way!</div>
+              <div style={{ fontSize: '0.78rem', color: '#0369a1', marginTop: '2px' }}>Live GPS Tracking Active • Arriving in ~15 Mins</div>
+            </>
+          ) : (
+            <>
+              <div style={{ fontSize: '2.5rem', marginBottom: '6px' }}>📍</div>
+              <div style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.95rem' }}>Store Dispatch Center</div>
+              <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px' }}>Order is being processed & packed for delivery</div>
+            </>
+          )}
+        </div>
+
         {/* Order Status Timeline */}
-        <div className="glass-panel" style={{ padding: '40px', marginBottom: '40px' }}>
-          <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.5rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '32px' }}>STATUS UPDATE</h2>
-          
-          <div style={{ display: 'flex', justifyContent: 'space-between', position: 'relative' }}>
-            <div style={{ position: 'absolute', top: '16px', left: '20px', right: '20px', height: '2px', background: 'var(--border-light)', zIndex: 0 }}></div>
-            
-            {stages.map((stage, idx) => (
-              <div key={stage.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', zIndex: 1, flex: 1 }}>
-                <div style={{ 
-                  width: '32px', height: '32px', borderRadius: '50%', 
-                  background: stage.active ? 'var(--text-primary)' : 'var(--bg-primary)',
-                  border: `2px solid ${stage.active ? 'var(--text-primary)' : 'var(--border-light)'}`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  marginBottom: '12px',
-                  color: '#fff'
+        <div style={{
+          background: '#ffffff',
+          borderRadius: '16px',
+          padding: '16px 12px',
+          border: '1px solid rgba(22, 163, 74, 0.15)',
+          boxShadow: '0 4px 12px rgba(6, 56, 33, 0.04)',
+          marginBottom: '14px'
+        }}>
+          <h3 style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A', marginBottom: '14px' }}>Delivery Progress</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+            {stages.map((stage) => (
+              <div key={stage.key} style={{
+                background: stage.active ? '#f0fdf4' : '#f8fafc',
+                border: `1px solid ${stage.active ? '#16a34a' : '#e2e8f0'}`,
+                borderRadius: '12px',
+                padding: '8px',
+                textAlign: 'center'
+              }}>
+                <div style={{
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '50%',
+                  background: stage.active ? '#16a34a' : '#cbd5e1',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 4px',
+                  fontSize: '0.7rem',
+                  fontWeight: 800
                 }}>
-                  {stage.active && <span style={{ fontSize: '0.85rem' }}>✓</span>}
+                  {stage.active ? '✓' : ''}
                 </div>
-                <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: stage.active ? 'var(--text-primary)' : 'var(--text-tertiary)', textAlign: 'center' }}>
+                <div style={{ fontSize: '0.68rem', fontWeight: stage.active ? 800 : 500, color: stage.active ? '#15803d' : '#64748b' }}>
                   {stage.label}
                 </div>
               </div>
@@ -116,39 +218,60 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
-          {/* Driver Details */}
-          <div className="glass-panel" style={{ padding: '32px' }}>
-            <h3 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '24px' }}>Delivery Courier</h3>
+        {/* Courier & Address Info Grid */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {/* Driver Card */}
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '16px',
+            padding: '14px',
+            border: '1px solid rgba(22, 163, 74, 0.15)',
+            boxShadow: '0 4px 12px rgba(6, 56, 33, 0.04)'
+          }}>
+            <h4 style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase', marginBottom: '8px' }}>
+              Delivery Partner
+            </h4>
             {order.driver ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '50%',
+                  background: '#dcfce7',
+                  color: '#15803d',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.4rem'
+                }}>
                   🧑‍✈️
                 </div>
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: '1.25rem' }}>{order.driver.name}</div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>4.9 ★ • White Van</div>
+                  <div style={{ fontWeight: 800, fontSize: '0.92rem', color: '#0F172A' }}>{order.driver.name}</div>
+                  <div style={{ fontSize: '0.75rem', color: '#16a34a', fontWeight: 700 }}>Verified Royal Driver • 4.9 ★</div>
                 </div>
               </div>
             ) : (
-              <div style={{ color: 'var(--text-tertiary)', fontStyle: 'italic', fontSize: '0.9rem' }}>
-                Courier will be assigned shortly...
+              <div style={{ fontSize: '0.8rem', color: '#64748b', fontStyle: 'italic' }}>
+                Assigning closest available driver...
               </div>
             )}
           </div>
 
-          {/* Delivery Details */}
-          <div className="glass-panel" style={{ padding: '32px' }}>
-            <h3 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '24px' }}>Delivery Address</h3>
-            <div style={{ fontWeight: 600, fontSize: '1rem', lineHeight: 1.5 }}>
-              {order.deliveryAddress || 'Sheikh Mohammed bin Rashid Blvd, Downtown Dubai, UAE'}
-            </div>
-            
-            <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid var(--border-light)' }}>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '8px' }}>Estimated Arrival</div>
-              <div style={{ fontWeight: 800, fontSize: '1.5rem', color: 'var(--accent-primary)' }}>
-                {order.estimatedDeliveryTime ? new Date(order.estimatedDeliveryTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '30-45 mins'}
-              </div>
+          {/* Delivery Address Card */}
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '16px',
+            padding: '14px',
+            border: '1px solid rgba(22, 163, 74, 0.15)',
+            boxShadow: '0 4px 12px rgba(6, 56, 33, 0.04)'
+          }}>
+            <h4 style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase', marginBottom: '8px' }}>
+              Delivery Destination
+            </h4>
+            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0F172A', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+              <MapPin size={16} color="#16a34a" style={{ flexShrink: 0, marginTop: '2px' }} />
+              <span>{order.deliveryAddress || 'King Fahd Road, Riyadh'}</span>
             </div>
           </div>
         </div>

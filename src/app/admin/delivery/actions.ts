@@ -54,6 +54,43 @@ export async function assignDriverAction(orderId: string, driverId?: string, est
   revalidatePath(`/orders/${orderId}`);
 }
 
+export async function verifyDeliveryOtpAction(orderId: string, inputOtp: string) {
+  const session = await getSession();
+  if (!session) return { success: false, error: 'Unauthorized' };
+
+  const order = await db.order.findUnique({ where: { id: orderId } });
+  if (!order) return { success: false, error: 'Order not found' };
+
+  if (order.otp && order.otp.trim() !== inputOtp.trim()) {
+    return { success: false, error: 'Incorrect OTP code. Please ask customer for valid 4-digit code.' };
+  }
+
+  await db.order.update({
+    where: { id: orderId },
+    data: { 
+      status: 'DELIVERED',
+      paymentStatus: 'PAID'
+    }
+  });
+
+  revalidatePath('/admin/delivery');
+  revalidatePath(`/orders/${orderId}`);
+  return { success: true };
+}
+
+export async function updateOrderStatusAction(orderId: string, newStatus: string) {
+  const session = await getSession();
+  if (!session) throw new Error('Unauthorized');
+
+  await db.order.update({
+    where: { id: orderId },
+    data: { status: newStatus }
+  });
+
+  revalidatePath('/admin/delivery');
+  revalidatePath(`/orders/${orderId}`);
+}
+
 export async function markDeliveredAction(orderId: string) {
   return markDelivered(orderId);
 }

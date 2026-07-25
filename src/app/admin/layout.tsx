@@ -1,6 +1,7 @@
 import { getSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { AdminNotificationBar } from '@/components/admin/AdminNotificationBar';
 
 export default async function AdminLayout({
   children,
@@ -17,6 +18,7 @@ export default async function AdminLayout({
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)', position: 'relative', overflow: 'hidden' }}>
+      <AdminNotificationBar />
       
       {/* Animated Professional Background Watermark */}
       <div style={{
