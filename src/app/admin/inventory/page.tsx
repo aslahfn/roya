@@ -1,5 +1,3 @@
-'use server';
-
 import { db } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
@@ -14,6 +12,7 @@ interface InventoryItem {
     sku: string;
     name: string;
     category: string;
+    unit?: string;
   };
   branch: {
     name: string;
@@ -23,8 +22,8 @@ interface InventoryItem {
 export default async function InventoryPage() {
   const session = await getSession();
 
-  if (!session || (session.role === 'CUSTOMER')) {
-    redirect('/admin');
+  if (!session || session.role === 'CUSTOMER') {
+    redirect('/login');
   }
 
   const inventoryList = await db.productBranch.findMany({
@@ -39,36 +38,43 @@ export default async function InventoryPage() {
 
   return (
     <div>
-      <header style={{ marginBottom: '48px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '1px solid var(--border-light)', paddingBottom: '24px' }}>
+      <header style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '1px solid var(--border-light)', paddingBottom: '20px' }}>
         <div>
-          <h1 className="title" style={{ fontSize: '3.5rem', margin: 0, lineHeight: 1 }}>INVENTORY</h1>
-          <p className="subtitle" style={{ textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '16px' }}>STOCK MANAGEMENT PANEL</p>
+          <h1 style={{ fontSize: '2rem', fontWeight: 900, color: '#0F172A', margin: 0 }}>INVENTORY MANAGEMENT</h1>
+          <p style={{ fontSize: '0.88rem', color: '#64748b', marginTop: '4px' }}>Real-time Stock Levels & Branch Allocation</p>
         </div>
       </header>
 
-      <div className="table-container brutalist-panel">
-        <table className="table">
+      <div style={{ background: '#ffffff', borderRadius: '20px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 4px 14px rgba(0,0,0,0.03)' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
-            <tr>
-              <th>SKU</th>
-              <th>Product</th>
-              <th>Branch</th>
-              <th>Current Stock</th>
-              <th>Update Stock</th>
+            <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+              <th style={{ padding: '16px 20px', fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>SKU</th>
+              <th style={{ padding: '16px 20px', fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>Product Name</th>
+              <th style={{ padding: '16px 20px', fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>Branch</th>
+              <th style={{ padding: '16px 20px', fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>Current Stock</th>
+              <th style={{ padding: '16px 20px', fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>Update Stock</th>
             </tr>
           </thead>
           <tbody>
             {inventoryList.map((item) => (
-              <tr key={item.id}>
-                <td style={{ fontSize: '0.85rem', color: 'var(--text-tertiary)' }}>{item.product.sku}</td>
-                <td style={{ fontWeight: 600 }}>{item.product.name}</td>
-                <td>{item.branch.name}</td>
-                <td>
-                  <span className={`badge ${item.stockQuantity > 50 ? 'badge-success' : item.stockQuantity > 10 ? 'badge-warning' : 'badge-error'}`} style={{ fontSize: '1rem', padding: '8px 16px' }}>
-                    {item.stockQuantity} UNITS
+              <tr key={item.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                <td style={{ padding: '16px 20px', fontSize: '0.85rem', color: '#64748b', fontWeight: 700 }}>{item.product.sku}</td>
+                <td style={{ padding: '16px 20px', fontWeight: 800, color: '#0F172A', fontSize: '0.9rem' }}>{item.product.name}</td>
+                <td style={{ padding: '16px 20px', color: '#64748b', fontSize: '0.85rem' }}>{item.branch.name}</td>
+                <td style={{ padding: '16px 20px' }}>
+                  <span style={{
+                    background: item.stockQuantity > 50 ? '#dcfce7' : item.stockQuantity > 10 ? '#fef3c7' : '#fee2e2',
+                    color: item.stockQuantity > 50 ? '#15803d' : item.stockQuantity > 10 ? '#92400e' : '#b91c1c',
+                    fontSize: '0.82rem',
+                    fontWeight: 900,
+                    padding: '6px 12px',
+                    borderRadius: '12px'
+                  }}>
+                    {item.stockQuantity} {item.product.unit || 'UNITS'}
                   </span>
                 </td>
-                <td>
+                <td style={{ padding: '16px 20px' }}>
                   <form action={async (formData) => {
                     'use server';
                     const qtyStr = formData.get('quantity') as string;
@@ -81,10 +87,9 @@ export default async function InventoryPage() {
                       type="number" 
                       name="quantity" 
                       defaultValue={item.stockQuantity}
-                      className="input-field" 
-                      style={{ width: '100px', padding: '6px 12px', fontSize: '0.9rem', background: '#fff', border: '1px solid #cbd5e1' }}
+                      style={{ width: '90px', padding: '8px 12px', fontSize: '0.9rem', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '10px', fontWeight: 700 }}
                     />
-                    <button type="submit" className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
+                    <button type="submit" style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: '10px', padding: '8px 14px', fontSize: '0.8rem', fontWeight: 800, cursor: 'pointer' }}>
                       Update
                     </button>
                   </form>
