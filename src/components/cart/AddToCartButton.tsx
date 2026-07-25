@@ -1,32 +1,60 @@
 'use client';
 
-import { useTransition, useState } from 'react';
-import { addToCart } from '@/app/actions/cart';
+import { useRef, useState } from 'react';
+import { useCart } from '@/context/CartContext';
+import { ShoppingBag } from 'lucide-react';
 
-export function AddToCartButton({ productId, disabled }: { productId: string, disabled?: boolean }) {
-  const [isPending, startTransition] = useTransition();
+interface AddToCartButtonProps {
+  product: {
+    id: string;
+    name: string;
+    price: number;
+    unit?: string;
+    image?: string;
+    category?: string;
+  };
+  disabled?: boolean;
+}
+
+export function AddToCartButton({ product, disabled }: AddToCartButtonProps) {
+  const { addToCart } = useCart();
   const [added, setAdded] = useState(false);
+  const btnRef = useRef<HTMLButtonElement>(null);
 
-  const handleAdd = () => {
-    startTransition(async () => {
-      try {
-        await addToCart(productId);
-        setAdded(true);
-        setTimeout(() => setAdded(false), 2000);
-      } catch (err) {
-        alert('Please sign in to add to cart.');
-      }
-    });
+  const handleAdd = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    addToCart(product, btnRef.current);
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1500);
   };
 
   return (
-    <button 
+    <button
+      ref={btnRef}
       onClick={handleAdd}
-      className={`btn ${added ? 'btn-primary' : 'btn-secondary'}`} 
-      style={{ padding: '12px 24px', fontSize: '0.85rem' }} 
-      disabled={disabled || isPending}
+      disabled={disabled}
+      className="touch-active"
+      style={{
+        padding: '8px 16px',
+        fontSize: '0.82rem',
+        fontWeight: 800,
+        borderRadius: '16px',
+        border: 'none',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        background: added
+          ? 'linear-gradient(135deg, #15803d 0%, #166534 100%)'
+          : 'linear-gradient(135deg, #16A34A 0%, #15803D 100%)',
+        color: '#ffffff',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '6px',
+        boxShadow: '0 4px 12px rgba(22, 163, 74, 0.3)',
+        transition: 'all 0.2s ease',
+        opacity: disabled ? 0.6 : 1,
+      }}
     >
-      {isPending ? 'ADDING...' : added ? '✓ ADDED' : 'ADD'}
+      <ShoppingBag size={14} />
+      <span>{added ? '✓ ADDED' : 'ADD'}</span>
     </button>
   );
 }

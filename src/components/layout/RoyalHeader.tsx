@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { MapPin, ShoppingBag, User, Globe, Search, Crown, Sparkles } from 'lucide-react';
+import { MapPin, ShoppingBag, User, Globe, Search, Crown } from 'lucide-react';
+import { useCart } from '@/context/CartContext';
 
 interface RoyalHeaderProps {
   session?: {
@@ -14,6 +15,7 @@ interface RoyalHeaderProps {
 
 export function RoyalHeader({ session, locationName = 'King Fahd Road, Riyadh' }: RoyalHeaderProps) {
   const [lang, setLang] = useState<'EN' | 'AR'>('EN');
+  const { totalQuantity, isBouncing } = useCart();
 
   return (
     <header style={{
@@ -160,18 +162,46 @@ export function RoyalHeader({ session, locationName = 'King Fahd Road, Riyadh' }
             </Link>
           )}
 
-          <Link href="/cart" style={{
-            position: 'relative',
-            background: 'rgba(255,255,255,0.15)',
-            padding: '10px',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#fff',
-            textDecoration: 'none'
-          }}>
+          {/* Cart Icon with Live Badge & Bounce Effect */}
+          <Link
+            id="header-cart-icon"
+            href="/cart"
+            style={{
+              position: 'relative',
+              background: 'rgba(255,255,255,0.15)',
+              padding: '10px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#fff',
+              textDecoration: 'none',
+              transform: isBouncing ? 'scale(1.25)' : 'scale(1)',
+              transition: 'transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28)',
+            }}
+          >
             <ShoppingBag size={20} />
+            {totalQuantity > 0 && (
+              <span style={{
+                position: 'absolute',
+                top: '-4px',
+                right: '-4px',
+                background: '#FFB800',
+                color: '#0A4D2E',
+                borderRadius: '50%',
+                width: '20px',
+                height: '20px',
+                fontSize: '0.72rem',
+                fontWeight: 900,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                animation: isBouncing ? 'badgePulse 0.4s ease-out' : 'none'
+              }}>
+                {totalQuantity}
+              </span>
+            )}
           </Link>
         </div>
       </div>
@@ -231,8 +261,38 @@ export function RoyalHeader({ session, locationName = 'King Fahd Road, Riyadh' }
               </Link>
             )}
 
-            <Link href="/cart" style={{ background: 'rgba(255,255,255,0.15)', padding: '8px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', position: 'relative' }}>
+            <Link href="/cart" style={{
+              background: 'rgba(255,255,255,0.15)',
+              padding: '8px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#fff',
+              position: 'relative',
+              transform: isBouncing ? 'scale(1.2)' : 'scale(1)',
+              transition: 'transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28)',
+            }}>
               <ShoppingBag size={18} />
+              {totalQuantity > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: '-4px',
+                  right: '-4px',
+                  background: '#FFB800',
+                  color: '#0A4D2E',
+                  borderRadius: '50%',
+                  width: '18px',
+                  height: '18px',
+                  fontSize: '0.68rem',
+                  fontWeight: 900,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  {totalQuantity}
+                </span>
+              )}
             </Link>
           </div>
         </div>
@@ -266,6 +326,14 @@ export function RoyalHeader({ session, locationName = 'King Fahd Road, Riyadh' }
           <Search size={16} color="#16a34a" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
         </div>
       </div>
+
+      <style>{`
+        @keyframes badgePulse {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.4); }
+          100% { transform: scale(1); }
+        }
+      `}</style>
     </header>
   );
 }

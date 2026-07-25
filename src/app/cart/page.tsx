@@ -1,79 +1,68 @@
-import { getSession } from '@/lib/auth';
-import { db } from '@/lib/db';
+'use client';
+
 import Link from 'next/link';
-import { CartItemActions } from '@/components/cart/CartItemActions';
+import { useCart } from '@/context/CartContext';
+import { useNotifications } from '@/context/NotificationContext';
 import { RoyalHeader } from '@/components/layout/RoyalHeader';
-import { ArrowLeft, ShoppingBag, ArrowRight, Tag } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, ArrowRight, Trash2, Plus, Minus } from 'lucide-react';
+import { useState } from 'react';
 
-export default async function CartPage() {
-  const session = await getSession();
+export default function CartPage() {
+  const { items, subtotal, totalQuantity, updateQuantity, removeFromCart, clearCart } = useCart();
+  const { addNotification } = useNotifications();
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
-  if (!session) {
-    return (
-      <div style={{ background: '#f8fafc', minHeight: '100vh' }}>
-        <RoyalHeader session={null} />
-        <div style={{ padding: '60px 16px', textAlign: 'center', maxWidth: '600px', margin: '0 auto' }}>
-          <div style={{ fontSize: '3.5rem', marginBottom: '12px' }}>🔒</div>
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0F172A', marginBottom: '8px' }}>Sign in to View Cart</h2>
-          <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '24px' }}>Access your fresh items across all your mobile and desktop devices.</p>
-          <Link href="/login" style={{
-            display: 'inline-block',
-            background: '#16a34a',
-            color: '#ffffff',
-            padding: '12px 28px',
-            borderRadius: '16px',
-            fontWeight: 800,
-            fontSize: '0.9rem',
-            textDecoration: 'none'
-          }}>
-            Sign In Now
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  const handleCheckout = async () => {
+    if (items.length === 0) return;
+    setIsPlacingOrder(true);
 
-  const cart = await db.cart.findUnique({
-    where: { userId: session.userId },
-    include: {
-      items: {
-        include: {
-          product: {
-            include: { pricing: true }
-          }
-        },
-        orderBy: { id: 'asc' }
+    const orderNumber = `ORD-${Math.floor(1000 + Math.random() * 9000)}`;
+    const itemsSummary = items.map(i => `${i.name} (${i.quantity} ${i.unit || 'Piece'})`).join(', ');
+
+    // Send instant Notification to Admin (Requirement 5)
+    addNotification({
+      roleTarget: 'ADMIN',
+      title: `📦 New Order Received #${orderNumber}`,
+      message: `Customer placed an order for ${items.length} items (${itemsSummary}).`,
+      type: 'NEW_ORDER',
+      data: {
+        customerName: 'Dave Customer',
+        orderNumber,
+        itemsOrdered: itemsSummary,
+        totalAmount: subtotal + 5.00,
+        paymentMethod: 'Cash on Delivery',
+        deliveryAddress: 'King Fahd Road, Riyadh, KSA',
+        orderTime: new Date().toLocaleTimeString()
       }
-    }
-  });
+    });
 
-  const cartItems = cart?.items || [];
-  let subtotal = 0;
-  cartItems.forEach(item => {
-    const price = item.product.pricing[0]?.sellingPrice || 0;
-    subtotal += price * item.quantity;
-  });
+    setTimeout(() => {
+      clearCart();
+      setIsPlacingOrder(false);
+      window.location.href = `/orders?created=${orderNumber}`;
+    }, 1200);
+  };
 
   return (
     <div style={{ background: '#f8fafc', minHeight: '100vh', paddingBottom: '100px' }}>
-      <RoyalHeader session={session} />
+      <RoyalHeader />
 
       <div style={{ padding: '20px', maxWidth: '1400px', margin: '0 auto' }}>
         {/* Navigation Breadcrumb */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
           <Link href="/" style={{ color: '#16a34a', display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 700 }}>
-            <ArrowLeft size={16} /> Back to Store
+            <ArrowLeft size={16} /> Back to Storefront
           </Link>
         </div>
 
         <h1 style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0F172A', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span>Shopping Cart</span>
           <span style={{ fontSize: '0.85rem', background: '#dcfce7', color: '#15803d', padding: '4px 10px', borderRadius: '14px', fontWeight: 800 }}>
-            {cartItems.reduce((acc, curr) => acc + curr.quantity, 0)} items
+            {totalQuantity} items
           </span>
         </h1>
 
-        {cartItems.length === 0 ? (
+        {items.length === 0 ? (
           <div style={{
             background: '#ffffff',
             borderRadius: '24px',
@@ -105,9 +94,8 @@ export default async function CartPage() {
             
             {/* Cart Items List */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {cartItems.map(item => {
-                const unitPrice = item.product.pricing[0]?.sellingPrice || 0;
-                const itemTotal = unitPrice * item.quantity;
+              {items.map(item => {
+                const itemTotal = item.price * item.quantity;
                 
                 return (
                   <div
@@ -135,18 +123,18 @@ export default async function CartPage() {
                         fontSize: '1.8rem',
                         flexShrink: 0
                       }}>
-                        🥦
+                        {item.category === 'Drinks' ? '🧃' : item.category === 'Dairy' ? '🥛' : '🥦'}
                       </div>
 
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: '0.68rem', color: '#16a34a', fontWeight: 800, textTransform: 'uppercase' }}>
-                          {item.product.category}
+                          {item.category || 'GROCERY'}
                         </div>
                         <div style={{ fontWeight: 800, fontSize: '1rem', color: '#0F172A', lineHeight: 1.2 }}>
-                          {item.product.name}
+                          {item.name}
                         </div>
-                        <div style={{ color: '#64748b', fontSize: '0.78rem', marginTop: '2px' }}>
-                          {item.product.brand} • {item.product.weight} {item.product.unit}
+                        <div style={{ color: '#16a34a', fontSize: '0.78rem', marginTop: '2px', fontWeight: 700 }}>
+                          Unit: 1 {item.unit || 'Piece'}
                         </div>
                       </div>
 
@@ -155,60 +143,57 @@ export default async function CartPage() {
                           AED {itemTotal.toFixed(2)}
                         </div>
                         <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
-                          AED {unitPrice.toFixed(2)} / ea
+                          AED {item.price.toFixed(2)} / {item.unit || 'ea'}
                         </div>
                       </div>
                     </div>
 
-                    {/* Quantity Actions */}
+                    {/* Quantity Control Actions */}
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'flex-end',
+                      justifyContent: 'space-between',
                       paddingTop: '10px',
                       borderTop: '1px solid #f1f5f9'
                     }}>
-                      <CartItemActions itemId={item.id} initialQuantity={item.quantity} />
+                      <button
+                        onClick={() => removeFromCart(item.id)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#ef4444',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          fontSize: '0.78rem',
+                          fontWeight: 700
+                        }}
+                      >
+                        <Trash2 size={14} /> Remove
+                      </button>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#f8fafc', padding: '4px 8px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                        <button
+                          onClick={() => updateQuantity(item.id, -1)}
+                          style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '8px', width: '28px', height: '28px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        >
+                          <Minus size={14} />
+                        </button>
+                        <span style={{ fontWeight: 800, fontSize: '0.9rem', minWidth: '24px', textAlign: 'center' }}>
+                          {item.quantity}
+                        </span>
+                        <button
+                          onClick={() => updateQuantity(item.id, 1)}
+                          style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '8px', width: '28px', height: '28px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
               })}
-
-              {/* Promo Code Input Card */}
-              <div style={{
-                background: '#ffffff',
-                borderRadius: '16px',
-                padding: '14px 16px',
-                border: '1px solid rgba(22, 163, 74, 0.14)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px'
-              }}>
-                <Tag size={18} color="#16a34a" />
-                <input
-                  type="text"
-                  placeholder="Enter promo code (e.g. ROYAL10)"
-                  style={{
-                    flex: 1,
-                    border: 'none',
-                    outline: 'none',
-                    fontSize: '0.88rem',
-                    color: '#0F172A'
-                  }}
-                />
-                <button style={{
-                  background: '#f0fdf4',
-                  color: '#16a34a',
-                  border: '1px solid #16a34a',
-                  borderRadius: '12px',
-                  padding: '8px 16px',
-                  fontWeight: 800,
-                  fontSize: '0.78rem',
-                  cursor: 'pointer'
-                }}>
-                  APPLY
-                </button>
-              </div>
             </div>
 
             {/* Cart Summary Panel */}
@@ -227,9 +212,9 @@ export default async function CartPage() {
                 <span>Item Subtotal</span>
                 <span style={{ fontWeight: 800, color: '#0F172A' }}>AED {subtotal.toFixed(2)}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.88rem', color: '#64748b', marginBottom: '16px' }}>
-                <span>Express Delivery</span>
-                <span style={{ fontWeight: 800, color: '#16a34a' }}>FREE</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.88rem', color: '#64748b', marginBottom: '10px' }}>
+                <span>Delivery Charge</span>
+                <span style={{ fontWeight: 800, color: '#16a34a' }}>AED 5.00</span>
               </div>
 
               <div style={{
@@ -242,12 +227,13 @@ export default async function CartPage() {
                 color: '#0A4D2E',
                 marginBottom: '24px'
               }}>
-                <span>Total Amount</span>
-                <span>AED {subtotal.toFixed(2)}</span>
+                <span>Grand Total</span>
+                <span>AED {(subtotal + 5.00).toFixed(2)}</span>
               </div>
 
-              <Link
-                href="/checkout"
+              <button
+                onClick={handleCheckout}
+                disabled={isPlacingOrder}
                 className="touch-active"
                 style={{
                   background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
@@ -256,7 +242,8 @@ export default async function CartPage() {
                   borderRadius: '16px',
                   fontWeight: 800,
                   fontSize: '0.95rem',
-                  textDecoration: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -265,9 +252,9 @@ export default async function CartPage() {
                   width: '100%'
                 }}
               >
-                <span>Proceed to Checkout</span>
+                <span>{isPlacingOrder ? 'PLACING ORDER...' : 'Place Order & Notify Admin'}</span>
                 <ArrowRight size={18} />
-              </Link>
+              </button>
             </div>
 
           </div>

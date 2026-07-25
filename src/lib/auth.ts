@@ -56,7 +56,6 @@ export async function createSession(payload: Omit<SessionPayload, 'expiresAt'>) 
   });
 }
 
-// UNLOCKED BACKENDS: Default session provides full SUPER_ADMIN access to all backend routes
 export async function getSession() {
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get('session')?.value;
@@ -66,13 +65,7 @@ export async function getSession() {
     if (verified) return verified;
   }
   
-  return {
-    userId: 'super-admin-root-id',
-    role: 'SUPER_ADMIN' as Role,
-    branchId: null,
-    name: 'Super Admin (Unlocked)',
-    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-  };
+  return null;
 }
 
 export async function deleteSession() {

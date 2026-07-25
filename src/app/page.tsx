@@ -1,9 +1,8 @@
 import { db } from '@/lib/db';
 import { getSession } from '@/lib/auth';
-import Link from 'next/link';
 import { AddToCartButton } from '@/components/cart/AddToCartButton';
 import { RoyalHeader } from '@/components/layout/RoyalHeader';
-import { Sparkles, Truck, Award, ShieldCheck, Gift, ArrowRight } from 'lucide-react';
+import { Sparkles, Truck, Award, ShieldCheck, Gift } from 'lucide-react';
 
 export default async function CustomerStorefront() {
   const session = await getSession();
@@ -29,7 +28,7 @@ export default async function CustomerStorefront() {
     { name: 'Drinks', emoji: '🧃', color: '#eff6ff', textColor: '#1d4ed8' },
     { name: 'Dairy', emoji: '🧀', color: '#fefce8', textColor: '#a16207' },
     { name: 'Meat', emoji: '🥩', color: '#fef2f2', textColor: '#b91c1c' },
-    { name: 'Frozen', emoji: '🧊', color: '#ecfeff', textColor: '#0e7490' },
+    { name: 'Produce', emoji: '🍌', color: '#ecfeff', textColor: '#0e7490' },
     { name: 'Grains', emoji: '🌾', color: '#fff7ed', textColor: '#c2410c' },
     { name: 'Bakery', emoji: '🥐', color: '#fffbe6', textColor: '#b45309' },
     { name: 'Snacks', emoji: '🍿', color: '#f3e8ff', textColor: '#7e22ce' },
@@ -128,7 +127,6 @@ export default async function CustomerStorefront() {
           </span>
         </div>
 
-        {/* Scrollable pill container on Mobile, Grid on Desktop */}
         <div className="no-scrollbar" style={{
           display: 'flex',
           gap: '12px',
@@ -212,7 +210,7 @@ export default async function CustomerStorefront() {
       <main style={{ padding: '0 20px 40px', maxWidth: '1400px', margin: '0 auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0F172A', margin: 0 }}>
-            Fresh Catalog
+            Fresh Grocery Catalog
           </h3>
           <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b' }}>
             {products.length} products available
@@ -221,99 +219,114 @@ export default async function CustomerStorefront() {
 
         {/* Responsive Dual Product Grid */}
         <div className="responsive-product-grid">
-          {products.map((product) => (
-            <div
-              key={product.id}
-              className="touch-active"
-              style={{
-                background: '#ffffff',
-                borderRadius: '20px',
-                border: '1px solid rgba(22, 163, 74, 0.15)',
-                padding: '14px',
-                display: 'flex',
-                flexDirection: 'column',
-                boxShadow: '0 4px 14px rgba(6, 56, 33, 0.05)',
-                position: 'relative'
-              }}
-            >
-              {/* Product Thumbnail */}
-              <div style={{
-                height: '140px',
-                borderRadius: '14px',
-                background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: '12px',
-                position: 'relative'
-              }}>
-                <span style={{ fontSize: '3rem' }}>
-                  {product.category === 'Drinks' ? '🧃' : product.category === 'Dairy' ? '🧀' : product.category === 'Meat' ? '🥩' : '🥦'}
-                </span>
-                <span style={{
-                  position: 'absolute',
-                  top: '8px',
-                  left: '8px',
-                  background: '#16a34a',
-                  color: '#ffffff',
-                  fontSize: '0.65rem',
-                  fontWeight: 800,
-                  padding: '2px 8px',
-                  borderRadius: '8px'
-                }}>
-                  FRESH
-                </span>
-              </div>
+          {products.map((product) => {
+            const price = product.pricing[0]?.sellingPrice || 0;
+            const unitLabel = product.unit || 'Piece';
 
-              {/* Product Details */}
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <div style={{ fontSize: '0.68rem', color: '#16a34a', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  {product.category}
-                </div>
-                <h4 style={{
-                  fontSize: '0.95rem',
-                  fontWeight: 800,
-                  color: '#0F172A',
-                  margin: '4px 0 6px',
-                  lineHeight: 1.25,
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden'
-                }}>
-                  {product.name}
-                </h4>
-                <div style={{ fontSize: '0.78rem', color: '#64748b', marginBottom: '12px' }}>
-                  {product.brand} • {product.weight} {product.unit}
-                </div>
-
-                {/* Price & Action */}
+            return (
+              <div
+                key={product.id}
+                className="touch-active"
+                style={{
+                  background: '#ffffff',
+                  borderRadius: '20px',
+                  border: '1px solid rgba(22, 163, 74, 0.15)',
+                  padding: '14px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  boxShadow: '0 4px 14px rgba(6, 56, 33, 0.05)',
+                  position: 'relative'
+                }}
+              >
+                {/* Product Thumbnail */}
                 <div style={{
-                  marginTop: 'auto',
+                  height: '140px',
+                  borderRadius: '14px',
+                  background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '8px',
-                  paddingTop: '10px',
-                  borderTop: '1px solid #f1f5f9'
+                  justifyContent: 'center',
+                  marginBottom: '12px',
+                  position: 'relative'
                 }}>
-                  <div>
-                    {showPrices ? (
-                      <span style={{ fontSize: '1.05rem', fontWeight: 900, color: '#0A4D2E' }}>
-                        AED {product.pricing[0]?.sellingPrice.toFixed(2) || 'N/A'}
-                      </span>
-                    ) : (
-                      <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#94a3b8' }}>
-                        Sign in
-                      </span>
-                    )}
+                  <span style={{ fontSize: '3rem' }}>
+                    {product.category === 'Drinks' || product.category === 'Beverages' ? '🧃' : product.category === 'Dairy' ? '🥛' : product.category === 'Meat' ? '🥩' : product.category === 'Bakery' ? '🍞' : '🍌'}
+                  </span>
+                  <span style={{
+                    position: 'absolute',
+                    top: '8px',
+                    left: '8px',
+                    background: '#16a34a',
+                    color: '#ffffff',
+                    fontSize: '0.65rem',
+                    fontWeight: 800,
+                    padding: '2px 8px',
+                    borderRadius: '8px'
+                  }}>
+                    {unitLabel.toUpperCase()}
+                  </span>
+                </div>
+
+                {/* Product Details */}
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ fontSize: '0.68rem', color: '#16a34a', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    {product.category}
+                  </div>
+                  <h4 style={{
+                    fontSize: '0.95rem',
+                    fontWeight: 800,
+                    color: '#0F172A',
+                    margin: '4px 0 6px',
+                    lineHeight: 1.25,
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden'
+                  }}>
+                    {product.name}
+                  </h4>
+                  <div style={{ fontSize: '0.78rem', color: '#64748b', marginBottom: '12px' }}>
+                    {product.brand} • <strong style={{ color: '#16a34a' }}>1 {unitLabel}</strong>
                   </div>
 
-                  <AddToCartButton productId={product.id} disabled={!showPrices} />
+                  {/* Price & Action */}
+                  <div style={{
+                    marginTop: 'auto',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '8px',
+                    paddingTop: '10px',
+                    borderTop: '1px solid #f1f5f9'
+                  }}>
+                    <div>
+                      {showPrices ? (
+                        <span style={{ fontSize: '1.05rem', fontWeight: 900, color: '#0A4D2E' }}>
+                          AED {price.toFixed(2)}
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#94a3b8' }}>
+                          Sign in
+                        </span>
+                      )}
+                    </div>
+
+                    <AddToCartButton
+                      product={{
+                        id: product.id,
+                        name: product.name,
+                        price: price,
+                        unit: unitLabel,
+                        image: product.images || '/logo.jpg',
+                        category: product.category,
+                      }}
+                      disabled={!showPrices}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </main>
     </div>

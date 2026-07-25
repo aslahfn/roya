@@ -2,12 +2,14 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { SplashScreen } from '@/components/layout/SplashScreen';
 import { LanguageProvider } from '@/context/LanguageContext';
+import { CartProvider } from '@/context/CartContext';
+import { NotificationProvider } from '@/context/NotificationContext';
 import { WhatsAppSupport } from '@/components/layout/WhatsAppSupport';
 import { MobileNav } from '@/components/layout/MobileNav';
 
 export const metadata: Metadata = {
-  title: "Royal Supermarket | Mobile Grocery Delivery",
-  description: "Royal Supermarket online mobile grocery platform",
+  title: "ROYA Supermarket | Online Grocery Ordering",
+  description: "Roya Supermarket production-ready online grocery platform",
 };
 
 export const viewport: Viewport = {
@@ -26,12 +28,16 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <LanguageProvider>
-          <SplashScreen />
-          <div className="mobile-app-wrapper has-bottom-nav">
-            {children}
-            <WhatsAppSupport />
-            <MobileNav />
-          </div>
+          <CartProvider>
+            <NotificationProvider>
+              <SplashScreen />
+              <div className="mobile-app-wrapper has-bottom-nav">
+                {children}
+                <WhatsAppSupport />
+                <MobileNav />
+              </div>
+            </NotificationProvider>
+          </CartProvider>
         </LanguageProvider>
       </body>
     </html>

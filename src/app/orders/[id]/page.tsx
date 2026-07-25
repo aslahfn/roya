@@ -1,281 +1,230 @@
 import { getSession } from '@/lib/auth';
 import { db } from '@/lib/db';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { RoyalHeader } from '@/components/layout/RoyalHeader';
-import { ArrowLeft, ShieldCheck, Truck, KeyRound, MapPin, Clock, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Package, Truck, Phone, CheckCircle, FileText, AlertTriangle } from 'lucide-react';
+import { revalidatePath } from 'next/cache';
 
-export default async function OrderTrackingPage({ params }: { params: Promise<{ id: string }> }) {
-  const session = await getSession();
+export const dynamic = 'force-dynamic';
+
+export default async function OrderDetailsPage({
+  params
+}: {
+  params: Promise<{ id: string }>
+}) {
   const { id } = await params;
-  
+  const session = await getSession();
+
+  if (!session) {
+    redirect('/login');
+  }
+
   const order = await db.order.findUnique({
     where: { id },
     include: {
-      driver: true,
-      paymentMethod: true,
+      user: true,
+      assignedDriver: true,
+      items: {
+        include: { product: true }
+      }
     }
   });
 
-  if (!order || (session?.role === 'CUSTOMER' && order.userId !== session.userId)) {
-    return (
-      <div style={{ background: '#f8fafc', minHeight: '100vh' }}>
-        <RoyalHeader session={session} />
-        <div style={{ padding: '60px 16px', textAlign: 'center' }}>
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0F172A', marginBottom: '8px' }}>Order Not Found</h2>
-          <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '24px' }}>This order does not exist or you do not have permission to view it.</p>
-          <Link href="/" style={{
-            display: 'inline-block',
-            background: '#16a34a',
-            color: '#ffffff',
-            padding: '12px 28px',
-            borderRadius: '16px',
-            fontWeight: 800,
-            fontSize: '0.9rem',
-            textDecoration: 'none'
-          }}>
-            Back to Store
-          </Link>
-        </div>
-      </div>
-    );
+  if (!order) {
+    redirect('/orders');
   }
 
-  // Delivery Stages
+  async function respondToAdjustment(formData: FormData) {
+    'use server';
+    const responseType = formData.get('responseType') as string;
+
+    if (responseType === 'ACCEPT') {
+      await db.order.update({
+        where: { id },
+        data: { customerAccepted: true }
+      });
+    } else if (responseType === 'CANCEL') {
+      await db.order.update({
+        where: { id },
+        data: { status: 'CANCELLED' }
+      });
+    }
+
+    revalidatePath(`/orders/${id}`);
+  }
+
   const stages = [
-    { key: 'RECEIVED', label: 'Received', active: true },
-    { key: 'CONFIRMED', label: 'Confirmed', active: ['CONFIRMED', 'PREPARING', 'PACKED', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(order.status) },
-    { key: 'PREPARING', label: 'Preparing', active: ['PREPARING', 'PACKED', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(order.status) },
-    { key: 'PACKED', label: 'Packed', active: ['PACKED', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(order.status) },
-    { key: 'OUT_FOR_DELIVERY', label: 'Out for Delivery', active: ['OUT_FOR_DELIVERY', 'DELIVERED'].includes(order.status) },
-    { key: 'DELIVERED', label: 'Delivered', active: order.status === 'DELIVERED' }
+    'RECEIVED',
+    'ACCEPTED',
+    'PREPARING',
+    'PACKED',
+    'ASSIGNED_DRIVER',
+    'OUT_FOR_DELIVERY',
+    'DELIVERED'
   ];
 
+  const currentStageIndex = stages.indexOf(order.status);
+
   return (
-    <div style={{ background: '#f8fafc', minHeight: '100vh', paddingBottom: '90px' }}>
+    <div style={{ background: '#f8fafc', minHeight: '100vh', paddingBottom: '100px' }}>
       <RoyalHeader session={session} />
 
-      <div style={{ padding: '14px 14px 0' }}>
-        {/* Navigation Breadcrumb */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-          <Link href="/orders" style={{ color: '#16a34a', display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none', fontSize: '0.82rem', fontWeight: 700 }}>
-            <ArrowLeft size={16} /> My Orders
+      <div style={{ padding: '20px', maxWidth: '1000px', margin: '0 auto' }}>
+        <div style={{ marginBottom: '16px' }}>
+          <Link href="/orders" style={{ color: '#16a34a', display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 700 }}>
+            <ArrowLeft size={16} /> Back to My Orders
           </Link>
         </div>
 
-        {/* Order Header Info */}
-        <div style={{
-          background: '#ffffff',
-          borderRadius: '16px',
-          padding: '14px',
-          border: '1px solid rgba(22, 163, 74, 0.15)',
-          boxShadow: '0 4px 12px rgba(6, 56, 33, 0.04)',
-          marginBottom: '12px'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+        <div style={{ background: '#ffffff', borderRadius: '24px', padding: '28px', border: '1px solid #e2e8f0', boxShadow: '0 6px 20px rgba(0,0,0,0.04)' }}>
+          
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
             <div>
-              <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 700 }}>ORDER ID</div>
-              <div style={{ fontWeight: 900, fontFamily: 'monospace', fontSize: '1.1rem', color: '#0A4D2E' }}>
-                #{order.id.slice(-8).toUpperCase()}
-              </div>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 700 }}>TOTAL PAID</div>
-              <div style={{ fontWeight: 900, fontSize: '1.1rem', color: '#16a34a' }}>
-                AED {order.totalAmount.toFixed(2)}
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: '#64748b' }}>
-            <Clock size={14} color="#16a34a" />
-            <span>Placed on {new Date(order.createdAt).toLocaleDateString()} at {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-          </div>
-        </div>
-
-        {/* PROMINENT DELIVERY OTP VERIFICATION CARD */}
-        {order.otp && (
-          <div style={{
-            background: 'linear-gradient(135deg, #0A4D2E 0%, #063821 100%)',
-            borderRadius: '20px',
-            padding: '18px 16px',
-            color: '#ffffff',
-            marginBottom: '14px',
-            boxShadow: '0 8px 24px rgba(10, 77, 46, 0.25)',
-            border: '2px solid #FFB800',
-            position: 'relative',
-            overflow: 'hidden'
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '10px',
-              borderBottom: '1px solid rgba(255,255,255,0.12)',
-              paddingBottom: '10px'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <KeyRound size={20} color="#FFB800" />
-                <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#ffffff', letterSpacing: '0.04em' }}>
-                  DELIVERY OTP CODE
-                </span>
-              </div>
-              <span style={{ background: 'rgba(255,184,0,0.2)', color: '#FFB800', fontSize: '0.68rem', fontWeight: 800, padding: '2px 8px', borderRadius: '10px' }}>
-                CONFIRMATION KEY
-              </span>
-            </div>
-
-            <div style={{ textAlign: 'center', padding: '8px 0' }}>
-              <div style={{ fontSize: '0.75rem', color: '#DCFCE7', fontWeight: 600, marginBottom: '4px' }}>
-                Share this 4-digit code with your driver upon arrival:
-              </div>
-              <div style={{
-                fontSize: '2.8rem',
-                fontWeight: 900,
-                fontFamily: 'monospace',
-                letterSpacing: '0.2em',
-                color: '#FFB800',
-                background: 'rgba(0,0,0,0.3)',
-                display: 'inline-block',
-                padding: '6px 24px',
-                borderRadius: '16px',
-                border: '1px stroke rgba(255,184,0,0.4)',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
-              }}>
-                {order.otp}
+              <h1 style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0A4D2E', margin: 0 }}>
+                Order #{order.id.slice(-6).toUpperCase()}
+              </h1>
+              <div style={{ fontSize: '0.82rem', color: '#64748b', marginTop: '4px' }}>
+                Placed on {new Date(order.createdAt).toLocaleString()}
               </div>
             </div>
 
-            <div style={{ fontSize: '0.72rem', color: '#e2e8f0', textAlign: 'center', marginTop: '8px', opacity: 0.9 }}>
-              🛡️ The driver requires this OTP to complete & verify your delivery.
-            </div>
-          </div>
-        )}
-
-        {/* Live Tracking Map Placeholder */}
-        <div style={{
-          background: order.status === 'OUT_FOR_DELIVERY' ? 'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)' : '#ffffff',
-          borderRadius: '16px',
-          padding: '24px 16px',
-          marginBottom: '14px',
-          textAlign: 'center',
-          border: '1px solid rgba(22, 163, 74, 0.15)',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
-        }}>
-          {order.status === 'OUT_FOR_DELIVERY' ? (
-            <>
-              <div style={{ fontSize: '2.5rem', marginBottom: '6px' }}>🚚</div>
-              <div style={{ fontWeight: 800, color: '#0284c7', fontSize: '1rem' }}>Driver is On The Way!</div>
-              <div style={{ fontSize: '0.78rem', color: '#0369a1', marginTop: '2px' }}>Live GPS Tracking Active • Arriving in ~15 Mins</div>
-            </>
-          ) : (
-            <>
-              <div style={{ fontSize: '2.5rem', marginBottom: '6px' }}>📍</div>
-              <div style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.95rem' }}>Store Dispatch Center</div>
-              <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px' }}>Order is being processed & packed for delivery</div>
-            </>
-          )}
-        </div>
-
-        {/* Order Status Timeline */}
-        <div style={{
-          background: '#ffffff',
-          borderRadius: '16px',
-          padding: '16px 12px',
-          border: '1px solid rgba(22, 163, 74, 0.15)',
-          boxShadow: '0 4px 12px rgba(6, 56, 33, 0.04)',
-          marginBottom: '14px'
-        }}>
-          <h3 style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A', marginBottom: '14px' }}>Delivery Progress</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
-            {stages.map((stage) => (
-              <div key={stage.key} style={{
-                background: stage.active ? '#f0fdf4' : '#f8fafc',
-                border: `1px solid ${stage.active ? '#16a34a' : '#e2e8f0'}`,
+            <Link
+              href={`/api/invoice/${order.id}`}
+              target="_blank"
+              style={{
+                background: '#16a34a',
+                color: '#ffffff',
+                padding: '10px 18px',
                 borderRadius: '12px',
-                padding: '8px',
-                textAlign: 'center'
-              }}>
-                <div style={{
-                  width: '20px',
-                  height: '20px',
-                  borderRadius: '50%',
-                  background: stage.active ? '#16a34a' : '#cbd5e1',
-                  color: '#ffffff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto 4px',
-                  fontSize: '0.7rem',
-                  fontWeight: 800
-                }}>
-                  {stage.active ? '✓' : ''}
+                fontWeight: 800,
+                fontSize: '0.85rem',
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              <FileText size={16} /> View & Download Invoice PDF
+            </Link>
+          </div>
+
+          {/* Requirement 13: Order Status Workflow Live Progress Bar */}
+          <div style={{ background: '#f0fdf4', borderRadius: '18px', padding: '20px', marginBottom: '28px', border: '1px solid #bbf7d0' }}>
+            <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0A4D2E', marginBottom: '16px' }}>
+              LIVE DELIVERY STATUS WORKFLOW
+            </h3>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', position: 'relative' }}>
+              {stages.map((stage, idx) => {
+                const isPassed = idx <= currentStageIndex;
+                const isCurrent = idx === currentStageIndex;
+
+                return (
+                  <div key={stage} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, textAlign: 'center', position: 'relative', zIndex: 1 }}>
+                    <div style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '50%',
+                      background: isPassed ? '#16a34a' : '#e2e8f0',
+                      color: '#ffffff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 900,
+                      fontSize: '0.75rem',
+                      boxShadow: isCurrent ? '0 0 0 4px #bbf7d0' : 'none'
+                    }}>
+                      {idx + 1}
+                    </div>
+                    <span style={{ fontSize: '0.65rem', fontWeight: isCurrent ? 900 : 700, color: isPassed ? '#15803d' : '#94a3b8', marginTop: '6px' }}>
+                      {stage.replace(/_/g, ' ')}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Requirement 7: Customer Notification After Admin Changes Panel */}
+          {order.inventoryAdjusted && (
+            <div style={{ background: '#fff7ed', border: '1.5px solid #fed7aa', borderRadius: '18px', padding: '20px', marginBottom: '28px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <AlertTriangle size={20} color="#c2410c" />
+                <h4 style={{ fontSize: '1rem', fontWeight: 800, color: '#9a3412', margin: 0 }}>
+                  Order Revised by Supermarket Admin
+                </h4>
+              </div>
+              <p style={{ fontSize: '0.85rem', color: '#c2410c', margin: '0 0 16px', lineHeight: 1.4 }}>
+                Some items were adjusted due to fresh stock availability. Please review the updated quantities below.
+              </p>
+
+              <form action={respondToAdjustment} style={{ display: 'flex', gap: '12px' }}>
+                <button
+                  type="submit"
+                  name="responseType"
+                  value="ACCEPT"
+                  style={{ background: '#16a34a', color: '#fff', border: 'none', padding: '10px 18px', borderRadius: '12px', fontWeight: 800, cursor: 'pointer', fontSize: '0.85rem' }}
+                >
+                  Accept Changes & Continue
+                </button>
+                <button
+                  type="submit"
+                  name="responseType"
+                  value="CANCEL"
+                  style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '10px 18px', borderRadius: '12px', fontWeight: 800, cursor: 'pointer', fontSize: '0.85rem' }}
+                >
+                  Cancel Order
+                </button>
+              </form>
+            </div>
+          )}
+
+          {/* Requirement 8: Driver Assignment Display */}
+          {order.assignedDriver && (
+            <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '18px', padding: '20px', marginBottom: '28px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#2563eb', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Truck size={24} />
+              </div>
+              <div>
+                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1d4ed8' }}>ASSIGNED DELIVERY DRIVER</div>
+                <div style={{ fontSize: '1.05rem', fontWeight: 900, color: '#1e3a8a', marginTop: '2px' }}>
+                  {order.assignedDriver.name} ({order.assignedDriver.vehicleNumber})
                 </div>
-                <div style={{ fontSize: '0.68rem', fontWeight: stage.active ? 800 : 500, color: stage.active ? '#15803d' : '#64748b' }}>
-                  {stage.label}
+                <div style={{ fontSize: '0.85rem', color: '#2563eb', fontWeight: 700, marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Phone size={14} /> Call Driver: {order.assignedDriver.phone}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Items Summary Table */}
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F172A', marginBottom: '14px' }}>Ordered Items</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {order.items.map(item => (
+              <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#0F172A' }}>{item.product.name}</div>
+                  <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                    Qty: {item.quantity} {item.unit || item.product.unit || 'Piece'}
+                    {item.originalQty && item.originalQty !== item.quantity && (
+                      <span style={{ color: '#c2410c', fontWeight: 700, marginLeft: '6px' }}>(Original: {item.originalQty})</span>
+                    )}
+                  </div>
+                </div>
+                <div style={{ fontWeight: 900, color: '#0A4D2E', fontSize: '0.95rem' }}>
+                  AED {(item.price * item.quantity).toFixed(2)}
                 </div>
               </div>
             ))}
           </div>
-        </div>
 
-        {/* Courier & Address Info Grid */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {/* Driver Card */}
-          <div style={{
-            background: '#ffffff',
-            borderRadius: '16px',
-            padding: '14px',
-            border: '1px solid rgba(22, 163, 74, 0.15)',
-            boxShadow: '0 4px 12px rgba(6, 56, 33, 0.04)'
-          }}>
-            <h4 style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase', marginBottom: '8px' }}>
-              Delivery Partner
-            </h4>
-            {order.driver ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{
-                  width: '42px',
-                  height: '42px',
-                  borderRadius: '50%',
-                  background: '#dcfce7',
-                  color: '#15803d',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.4rem'
-                }}>
-                  🧑‍✈️
-                </div>
-                <div>
-                  <div style={{ fontWeight: 800, fontSize: '0.92rem', color: '#0F172A' }}>{order.driver.name}</div>
-                  <div style={{ fontSize: '0.75rem', color: '#16a34a', fontWeight: 700 }}>Verified Royal Driver • 4.9 ★</div>
-                </div>
-              </div>
-            ) : (
-              <div style={{ fontSize: '0.8rem', color: '#64748b', fontStyle: 'italic' }}>
-                Assigning closest available driver...
-              </div>
-            )}
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '20px', paddingTop: '16px', borderTop: '2px solid #f1f5f9', fontWeight: 900, fontSize: '1.2rem', color: '#0A4D2E' }}>
+            <span>Total Amount:</span>
+            <span>AED {order.totalAmount.toFixed(2)}</span>
           </div>
 
-          {/* Delivery Address Card */}
-          <div style={{
-            background: '#ffffff',
-            borderRadius: '16px',
-            padding: '14px',
-            border: '1px solid rgba(22, 163, 74, 0.15)',
-            boxShadow: '0 4px 12px rgba(6, 56, 33, 0.04)'
-          }}>
-            <h4 style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase', marginBottom: '8px' }}>
-              Delivery Destination
-            </h4>
-            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0F172A', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
-              <MapPin size={16} color="#16a34a" style={{ flexShrink: 0, marginTop: '2px' }} />
-              <span>{order.deliveryAddress || 'King Fahd Road, Riyadh'}</span>
-            </div>
-          </div>
         </div>
-
       </div>
     </div>
   );

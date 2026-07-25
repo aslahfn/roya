@@ -3,151 +3,148 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Crown, ShoppingBag, User, ShieldCheck, MessageSquare, Sparkles } from 'lucide-react';
+import { Crown, ShoppingBag, User, ShieldCheck, KeyRound, UserPlus, LogIn, ArrowRight } from 'lucide-react';
 
 export default function LoginPage() {
-  const [authMethod, setAuthMethod] = useState<'otp' | 'email'>('otp');
   const [portalRole, setPortalRole] = useState<'customer' | 'admin'>('customer');
-  const [countryCode, setCountryCode] = useState('+966');
-  const [phone, setPhone] = useState('501234567');
-  const [otpSent, setOtpSent] = useState(false);
-  const [generatedOtp, setGeneratedOtp] = useState('4829');
-  const [otpCode, setOtpCode] = useState('');
-  const [showSmsNotification, setShowSmsNotification] = useState(false);
+  const [mode, setMode] = useState<'login' | 'register' | 'forgot'>('login');
   
+  // Form states
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleSendOTP = async (e: React.FormEvent) => {
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phone) {
-      setError('Please enter a valid mobile number');
-      return;
-    }
     setLoading(true);
     setError('');
+    setSuccessMsg('');
 
     try {
-      const res = await fetch('/api/auth/send-otp', {
+      const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, countryCode }),
+        body: JSON.stringify({
+          email: email || 'royasupermarket.com',
+          password: password || 'roya@123',
+          portalRole: 'admin',
+        }),
       });
 
       const data = await res.json();
       if (res.ok && data.success) {
-        setGeneratedOtp(data.otpCode);
-        setOtpCode(data.otpCode);
-        setOtpSent(true);
-        setShowSmsNotification(true);
+        window.location.href = '/admin';
       } else {
-        const code = '4829';
-        setGeneratedOtp(code);
-        setOtpCode(code);
-        setOtpSent(true);
-        setShowSmsNotification(true);
+        setError(data.error || 'Invalid Administrator Credentials');
       }
     } catch (err) {
-      const code = '4829';
-      setGeneratedOtp(code);
-      setOtpCode(code);
-      setOtpSent(true);
-      setShowSmsNotification(true);
+      setError('Invalid Administrator Credentials');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleVerifyOTP = async (e: React.FormEvent) => {
+  const handleCustomerAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setSuccessMsg('');
 
+    if (mode === 'register') {
+      if (!name || !email || !password) {
+        setError('Please fill in all required fields.');
+        setLoading(false);
+        return;
+      }
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, phone, password }),
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          window.location.href = '/';
+        } else {
+          setError(data.error || 'Registration failed');
+        }
+      } catch (err) {
+        setError('Connection error during registration');
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    if (mode === 'forgot') {
+      if (!email) {
+        setError('Please enter your registered email address.');
+        setLoading(false);
+        return;
+      }
+      try {
+        const res = await fetch('/api/auth/reset-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          setSuccessMsg(data.message || 'Password reset link sent to your email address.');
+        } else {
+          setError(data.error || 'Reset failed');
+        }
+      } catch (err) {
+        setError('Network error resetting password');
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    // Customer Login
     try {
-      await fetch('/api/auth/login', {
+      const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          email: portalRole === 'customer' ? 'customer@supermarket.com' : 'superadmin@supermarket.com', 
-          password: 'password123'
+        body: JSON.stringify({
+          email: email || 'customer@supermarket.com',
+          password: password || 'password123',
+          portalRole: 'customer',
         }),
       });
 
-      if (portalRole === 'customer') {
-        router.push('/setup-profile');
+      const data = await res.json();
+      if (res.ok && data.success) {
+        window.location.href = '/';
       } else {
-        router.push('/admin');
+        setError(data.error || 'Invalid credentials');
       }
     } catch (err) {
-      if (portalRole === 'customer') {
-        router.push('/setup-profile');
-      } else {
-        router.push('/admin');
-      }
+      setError('Connection error during login');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEmailAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    try {
-      const targetEmail = email || (portalRole === 'customer' ? 'customer@supermarket.com' : 'superadmin@supermarket.com');
-      const targetPass = password || 'password123';
-
-      await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: targetEmail, password: targetPass }),
-      });
-
-      if (portalRole === 'customer') {
-        router.push('/');
-      } else {
-        router.push('/admin');
-      }
-    } catch (err) {
-      if (portalRole === 'customer') {
-        router.push('/');
-      } else {
-        router.push('/admin');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleQuickRoleSelect = (role: 'customer' | 'admin') => {
+  const switchRole = (role: 'customer' | 'admin') => {
     setPortalRole(role);
-    const targetEmail = role === 'customer' ? 'customer@supermarket.com' : 'superadmin@supermarket.com';
-    setLoading(true);
-
-    fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: targetEmail, password: 'password123' }),
-    })
-      .then(() => {
-        if (role === 'customer') {
-          router.push('/setup-profile');
-        } else {
-          router.push('/admin');
-        }
-      })
-      .catch(() => {
-        if (role === 'customer') {
-          router.push('/setup-profile');
-        } else {
-          router.push('/admin');
-        }
-      })
-      .finally(() => setLoading(false));
+    setError('');
+    setSuccessMsg('');
+    if (role === 'admin') {
+      setMode('login'); // Admin ONLY has Login page
+      setEmail('royasupermarket.com');
+      setPassword('roya@123');
+    } else {
+      setEmail('');
+      setPassword('');
+    }
   };
 
   return (
@@ -170,83 +167,9 @@ export default function LoginPage() {
         </Link>
       </div>
 
-      {/* Floating Blur Orbs (Emerald Green) */}
-      <div className="blur-blob blob-emerald" style={{ width: '500px', height: '500px', top: '-10%', left: '-10%' }}></div>
-      <div className="blur-blob blob-emerald" style={{ width: '400px', height: '400px', bottom: '-10%', right: '-10%' }}></div>
-
-      {/* OTP Dispatch Banner */}
-      {showSmsNotification && (
-        <div className="animate-fade-in" style={{
-          position: 'fixed',
-          top: '20px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: '90%',
-          maxWidth: '440px',
-          background: '#16A34A',
-          color: '#ffffff',
-          borderRadius: '16px',
-          padding: '16px 20px',
-          boxShadow: '0 12px 36px rgba(22, 163, 74, 0.35)',
-          zIndex: 1000,
-          border: '1px solid #dcfce7',
-          display: 'flex',
-          alignItems: 'flex-start',
-          gap: '12px'
-        }}>
-          <div style={{
-            background: '#ffffff',
-            color: '#16A34A',
-            borderRadius: '50%',
-            width: '36px',
-            height: '36px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-            fontWeight: 'bold'
-          }}>
-            <MessageSquare size={20} />
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#ffffff' }}>
-                💬 ROYA OTP CODE DISPATCHED
-              </span>
-              <button 
-                onClick={() => setShowSmsNotification(false)}
-                style={{ background: 'none', border: 'none', color: '#ffffff', cursor: 'pointer', fontSize: '0.8rem' }}
-              >
-                ✕
-              </button>
-            </div>
-            <p style={{ fontSize: '0.95rem', fontWeight: 700, margin: '4px 0 2px' }}>
-              Your ROYA code is <span style={{ color: '#FEF08A', fontSize: '1.2rem', letterSpacing: '0.1em' }}>{generatedOtp}</span>
-            </p>
-            <p style={{ fontSize: '0.75rem', color: '#f0fdf4' }}>
-              Target: {countryCode} {phone}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Brand Header with ANIMATED SUPERMARKET LOGO in correct centered position */}
-      <Link href="/" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '28px', textDecoration: 'none', position: 'relative', zIndex: 1 }}>
-        
-        {/* Animated Supermarket Logo Badge */}
-        <div style={{ position: 'relative', marginBottom: '14px' }}>
-          
-          {/* Pulsing Outer Glow Ring */}
-          <div className="pulse-glow" style={{
-            position: 'absolute',
-            inset: '-6px',
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, #16A34A 0%, #EAB308 100%)',
-            opacity: 0.45,
-            filter: 'blur(10px)'
-          }}></div>
-
-          {/* Centered Animated Supermarket Logo */}
+      {/* Brand Header */}
+      <Link href="/" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '24px', textDecoration: 'none', position: 'relative', zIndex: 1 }}>
+        <div style={{ position: 'relative', marginBottom: '12px' }}>
           <div style={{
             position: 'relative',
             width: '72px',
@@ -260,34 +183,24 @@ export default function LoginPage() {
             boxShadow: '0 12px 32px rgba(22, 163, 74, 0.4)',
             border: '2.5px solid #ffffff'
           }}>
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Crown size={34} color="#FEF08A" strokeWidth={2.5} style={{ animation: 'bounceSlow 2s ease-in-out infinite' }} />
-              <ShoppingBag size={20} color="#ffffff" style={{ position: 'absolute', bottom: '-4px', right: '-4px' }} />
-            </div>
+            <Crown size={34} color="#FEF08A" strokeWidth={2.5} />
+            <ShoppingBag size={20} color="#ffffff" style={{ position: 'absolute', bottom: '-4px', right: '-4px' }} />
           </div>
         </div>
 
-        {/* Supermarket Name: ROYA SUPERMARKET */}
-        <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '2.4rem', fontWeight: 900, color: '#16A34A', letterSpacing: '-0.02em', textAlign: 'center' }}>
+        <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '2.2rem', fontWeight: 900, color: '#16A34A', letterSpacing: '-0.02em', textAlign: 'center', margin: 0 }}>
           ROYA SUPERMARKET
         </h1>
-        <p style={{ fontSize: '0.88rem', color: '#166534', fontWeight: 700, marginTop: '2px' }}>
-          Freshness Delivered to Your Doorstep
+        <p style={{ fontSize: '0.85rem', color: '#166534', fontWeight: 700, marginTop: '2px' }}>
+          Production-Ready Grocery Platform
         </p>
-
-        <style>{`
-          @keyframes bounceSlow {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-4px); }
-          }
-        `}</style>
       </Link>
 
-      {/* Main Login Card (White & Green) */}
-      <div className="royal-card animate-fade-in" style={{
+      {/* Main Auth Card */}
+      <div style={{
         width: '100%',
         maxWidth: '460px',
-        padding: '38px 34px',
+        padding: '36px 32px',
         background: '#ffffff',
         boxShadow: '0 16px 40px rgba(22, 163, 74, 0.12)',
         borderRadius: '24px',
@@ -296,15 +209,63 @@ export default function LoginPage() {
         zIndex: 1
       }}>
         
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#052e16', marginBottom: '4px' }}>
-            Welcome Back!
-          </h2>
-          <p style={{ fontSize: '0.88rem', color: '#166534' }}>
-            Login or register to ROYA Supermarket
-          </p>
+        {/* Role Selection Tabs */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: '8px',
+          background: '#F0FDF4',
+          padding: '4px',
+          borderRadius: '16px',
+          marginBottom: '24px',
+          border: '1px solid rgba(22, 163, 74, 0.15)'
+        }}>
+          <button
+            type="button"
+            onClick={() => switchRole('customer')}
+            style={{
+              padding: '10px',
+              borderRadius: '12px',
+              border: 'none',
+              fontWeight: 800,
+              fontSize: '0.88rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              background: portalRole === 'customer' ? '#16A34A' : 'transparent',
+              color: portalRole === 'customer' ? '#ffffff' : '#166534',
+              boxShadow: portalRole === 'customer' ? '0 2px 8px rgba(22,163,74,0.25)' : 'none'
+            }}
+          >
+            <User size={16} /> Customer Portal
+          </button>
+
+          <button
+            type="button"
+            onClick={() => switchRole('admin')}
+            style={{
+              padding: '10px',
+              borderRadius: '12px',
+              border: 'none',
+              fontWeight: 800,
+              fontSize: '0.88rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              background: portalRole === 'admin' ? '#16A34A' : 'transparent',
+              color: portalRole === 'admin' ? '#ffffff' : '#166534',
+              boxShadow: portalRole === 'admin' ? '0 2px 8px rgba(22,163,74,0.25)' : 'none'
+            }}
+          >
+            <ShieldCheck size={16} /> Admin Login ONLY
+          </button>
         </div>
 
+        {/* Feedback Alert */}
         {error && (
           <div style={{
             background: '#FEE2E2',
@@ -314,236 +275,180 @@ export default function LoginPage() {
             borderRadius: '12px',
             marginBottom: '20px',
             fontSize: '0.85rem',
-            fontWeight: 600,
+            fontWeight: 700,
             textAlign: 'center'
           }}>
             {error}
           </div>
         )}
 
-        {/* Portal Role Switcher: Customer vs Admin */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '12px',
-          marginBottom: '20px'
-        }}>
-          <button
-            type="button"
-            onClick={() => handleQuickRoleSelect('customer')}
-            className={`btn ${portalRole === 'customer' ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ padding: '12px', borderRadius: '12px', fontSize: '0.88rem', fontWeight: 800 }}
-          >
-            <User size={16} /> Customer
-          </button>
-          <button
-            type="button"
-            onClick={() => handleQuickRoleSelect('admin')}
-            className={`btn ${portalRole === 'admin' ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ padding: '12px', borderRadius: '12px', fontSize: '0.88rem', fontWeight: 800 }}
-          >
-            <ShieldCheck size={16} /> Admin
-          </button>
-        </div>
+        {successMsg && (
+          <div style={{
+            background: '#DCFCE7',
+            border: '1px solid #16A34A',
+            color: '#15803D',
+            padding: '12px 16px',
+            borderRadius: '12px',
+            marginBottom: '20px',
+            fontSize: '0.85rem',
+            fontWeight: 700,
+            textAlign: 'center'
+          }}>
+            {successMsg}
+          </div>
+        )}
 
-        {/* Method Switcher: Mobile OTP vs Email */}
-        <div style={{
-          display: 'flex',
-          background: '#F0FDF4',
-          padding: '4px',
-          borderRadius: '12px',
-          marginBottom: '24px',
-          border: '1px solid rgba(22, 163, 74, 0.15)'
-        }}>
-          <button
-            type="button"
-            onClick={() => { setAuthMethod('otp'); setError(''); }}
-            style={{
-              flex: 1,
-              padding: '10px',
-              borderRadius: '8px',
-              border: 'none',
-              fontWeight: 700,
-              fontSize: '0.85rem',
-              cursor: 'pointer',
-              background: authMethod === 'otp' ? '#16A34A' : 'transparent',
-              color: authMethod === 'otp' ? '#ffffff' : '#166534',
-              boxShadow: authMethod === 'otp' ? '0 2px 8px rgba(22,163,74,0.2)' : 'none'
-            }}
-          >
-            📱 Mobile OTP
-          </button>
-          <button
-            type="button"
-            onClick={() => { setAuthMethod('email'); setError(''); }}
-            style={{
-              flex: 1,
-              padding: '10px',
-              borderRadius: '8px',
-              border: 'none',
-              fontWeight: 700,
-              fontSize: '0.85rem',
-              cursor: 'pointer',
-              background: authMethod === 'email' ? '#16A34A' : 'transparent',
-              color: authMethod === 'email' ? '#ffffff' : '#166534',
-              boxShadow: authMethod === 'email' ? '0 2px 8px rgba(22,163,74,0.2)' : 'none'
-            }}
-          >
-            ✉️ Email Login
-          </button>
-        </div>
-
-        {authMethod === 'otp' ? (
+        {/* ADMIN LOGIN ONLY VIEW */}
+        {portalRole === 'admin' ? (
           <div>
-            {!otpSent ? (
-              <form onSubmit={handleSendOTP}>
-                <div className="input-group">
-                  <label className="input-label">MOBILE NUMBER</label>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <select
-                      value={countryCode}
-                      onChange={(e) => setCountryCode(e.target.value)}
-                      style={{
-                        padding: '14px 12px',
-                        borderRadius: '14px',
-                        border: '1px solid rgba(22, 163, 74, 0.22)',
-                        background: '#F0FDF4',
-                        fontWeight: 700,
-                        fontSize: '0.95rem',
-                        color: '#16A34A',
-                        outline: 'none'
-                      }}
-                    >
-                      <option value="+966">🇸🇦 +966</option>
-                      <option value="+971">🇦🇪 +971</option>
-                      <option value="+91">🇮🇳 +91</option>
-                      <option value="+1">🇺🇸 +1</option>
-                    </select>
-                    <input
-                      type="tel"
-                      className="input-field"
-                      placeholder="50 123 4567"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      required
-                      style={{ flex: 1, fontWeight: 600 }}
-                    />
-                  </div>
-                </div>
+            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#052e16', marginBottom: '4px' }}>
+                Administrator Portal
+              </h2>
+              <p style={{ fontSize: '0.8rem', color: '#166534' }}>
+                Admin access is restricted to fixed credentials only.
+              </p>
+            </div>
 
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={loading}
-                  style={{ width: '100%', padding: '16px', fontSize: '1rem', borderRadius: '14px', marginTop: '8px' }}
-                >
-                  {loading ? 'DISPATCHING OTP...' : 'Send OTP to Mobile'}
-                </button>
-              </form>
-            ) : (
-              <form onSubmit={handleVerifyOTP} className="animate-fade-in">
-                <div style={{
-                  background: '#F0FDF4',
-                  padding: '16px',
-                  borderRadius: '14px',
-                  marginBottom: '20px',
-                  textAlign: 'center',
-                  border: '1px solid rgba(22,163,74,0.2)'
-                }}>
-                  <p style={{ fontSize: '0.85rem', color: '#166534', fontWeight: 700 }}>
-                    OTP sent to <strong>{countryCode} {phone}</strong>
-                  </p>
-                  
-                  <div style={{
-                    marginTop: '8px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    background: '#16A34A',
-                    color: '#ffffff',
-                    padding: '6px 14px',
-                    borderRadius: '20px',
-                    fontSize: '0.85rem',
-                    fontWeight: 800,
-                    boxShadow: '0 2px 6px rgba(22,163,74,0.25)'
-                  }}>
-                    <span>OTP Code:</span>
-                    <span style={{ fontSize: '1rem', letterSpacing: '0.1em' }}>{generatedOtp}</span>
-                  </div>
-                </div>
+            <form onSubmit={handleAdminLogin}>
+              <div className="input-group" style={{ marginBottom: '16px' }}>
+                <label className="input-label" style={{ fontSize: '0.75rem', fontWeight: 800, color: '#15803D' }}>ADMIN EMAIL</label>
+                <input
+                  type="text"
+                  className="input-field"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="royasupermarket.com"
+                  required
+                  style={{ width: '100%', padding: '14px', borderRadius: '12px', border: '1px solid #bbf7d0', fontSize: '0.95rem', fontWeight: 700 }}
+                />
+              </div>
 
-                <div className="input-group">
-                  <label className="input-label">ENTER VERIFICATION CODE</label>
+              <div className="input-group" style={{ marginBottom: '20px' }}>
+                <label className="input-label" style={{ fontSize: '0.75rem', fontWeight: 800, color: '#15803D' }}>ADMIN PASSWORD</label>
+                <input
+                  type="password"
+                  className="input-field"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  style={{ width: '100%', padding: '14px', borderRadius: '12px', border: '1px solid #bbf7d0', fontSize: '0.95rem', fontWeight: 700 }}
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={loading}
+                style={{ width: '100%', padding: '16px', fontSize: '1rem', borderRadius: '14px', fontWeight: 800, background: '#16A34A', color: '#fff', border: 'none', cursor: 'pointer' }}
+              >
+                {loading ? 'AUTHENTICATING...' : 'ACCESS ADMIN DASHBOARD'}
+              </button>
+            </form>
+          </div>
+        ) : (
+          /* CUSTOMER AUTHENTICATION VIEW */
+          <div>
+            {/* Customer Sub-Mode Switcher */}
+            <div style={{ display: 'flex', justifyContent: 'space-around', borderBottom: '2px solid #f0fdf4', paddingBottom: '12px', marginBottom: '20px' }}>
+              <button
+                type="button"
+                onClick={() => { setMode('login'); setError(''); setSuccessMsg(''); }}
+                style={{ background: 'none', border: 'none', fontWeight: mode === 'login' ? 800 : 600, color: mode === 'login' ? '#16A34A' : '#64748b', cursor: 'pointer', fontSize: '0.9rem' }}
+              >
+                <LogIn size={15} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> Login
+              </button>
+              <button
+                type="button"
+                onClick={() => { setMode('register'); setError(''); setSuccessMsg(''); }}
+                style={{ background: 'none', border: 'none', fontWeight: mode === 'register' ? 800 : 600, color: mode === 'register' ? '#16A34A' : '#64748b', cursor: 'pointer', fontSize: '0.9rem' }}
+              >
+                <UserPlus size={15} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> Register
+              </button>
+              <button
+                type="button"
+                onClick={() => { setMode('forgot'); setError(''); setSuccessMsg(''); }}
+                style={{ background: 'none', border: 'none', fontWeight: mode === 'forgot' ? 800 : 600, color: mode === 'forgot' ? '#16A34A' : '#64748b', cursor: 'pointer', fontSize: '0.9rem' }}
+              >
+                <KeyRound size={15} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> Reset Password
+              </button>
+            </div>
+
+            <form onSubmit={handleCustomerAuth}>
+              {mode === 'register' && (
+                <div className="input-group" style={{ marginBottom: '16px' }}>
+                  <label className="input-label" style={{ fontSize: '0.75rem', fontWeight: 800, color: '#15803D' }}>FULL NAME</label>
                   <input
                     type="text"
                     className="input-field"
-                    placeholder="1 2 3 4"
-                    maxLength={4}
-                    value={otpCode}
-                    onChange={(e) => setOtpCode(e.target.value)}
+                    placeholder="John Doe"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     required
-                    style={{ textAlign: 'center', fontSize: '1.6rem', letterSpacing: '0.3em', fontWeight: 800, color: '#16A34A' }}
+                    style={{ width: '100%', padding: '14px', borderRadius: '12px', border: '1px solid #bbf7d0' }}
                   />
                 </div>
+              )}
 
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={loading}
-                  style={{ width: '100%', padding: '16px', fontSize: '1rem', borderRadius: '14px' }}
-                >
-                  {loading ? 'VERIFYING...' : 'Verify OTP & Continue'}
-                </button>
-              </form>
-            )}
+              <div className="input-group" style={{ marginBottom: '16px' }}>
+                <label className="input-label" style={{ fontSize: '0.75rem', fontWeight: 800, color: '#15803D' }}>EMAIL ADDRESS</label>
+                <input
+                  type="email"
+                  className="input-field"
+                  placeholder="customer@supermarket.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  style={{ width: '100%', padding: '14px', borderRadius: '12px', border: '1px solid #bbf7d0' }}
+                />
+              </div>
 
-            {/* Social Demo Logins */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px' }}>
+              {mode === 'register' && (
+                <div className="input-group" style={{ marginBottom: '16px' }}>
+                  <label className="input-label" style={{ fontSize: '0.75rem', fontWeight: 800, color: '#15803D' }}>MOBILE NUMBER</label>
+                  <input
+                    type="tel"
+                    className="input-field"
+                    placeholder="+966 50 123 4567"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    style={{ width: '100%', padding: '14px', borderRadius: '12px', border: '1px solid #bbf7d0' }}
+                  />
+                </div>
+              )}
+
+              {mode !== 'forgot' && (
+                <div className="input-group" style={{ marginBottom: '20px' }}>
+                  <label className="input-label" style={{ fontSize: '0.75rem', fontWeight: 800, color: '#15803D' }}>PASSWORD</label>
+                  <input
+                    type="password"
+                    className="input-field"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    style={{ width: '100%', padding: '14px', borderRadius: '12px', border: '1px solid #bbf7d0' }}
+                  />
+                </div>
+              )}
+
               <button
-                type="button"
-                onClick={() => handleQuickRoleSelect('customer')}
-                className="btn btn-secondary"
-                style={{ width: '100%', padding: '12px', borderRadius: '12px', fontSize: '0.88rem' }}
+                type="submit"
+                className="btn btn-primary"
+                disabled={loading}
+                style={{ width: '100%', padding: '16px', fontSize: '1rem', borderRadius: '14px', fontWeight: 800, background: '#16A34A', color: '#fff', border: 'none', cursor: 'pointer' }}
               >
-                Continue with Google
+                {loading 
+                  ? 'PROCESSING...' 
+                  : mode === 'register' 
+                    ? 'CREATE CUSTOMER ACCOUNT' 
+                    : mode === 'forgot' 
+                      ? 'SEND PASSWORD RESET LINK' 
+                      : 'SIGN IN TO SUPERMARKET'}
               </button>
-            </div>
+            </form>
           </div>
-        ) : (
-          <form onSubmit={handleEmailAuth} className="animate-fade-in">
-            <div className="input-group">
-              <label className="input-label">EMAIL ADDRESS</label>
-              <input
-                type="email"
-                className="input-field"
-                placeholder={portalRole === 'customer' ? "customer@supermarket.com" : "admin@supermarket.com"}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="input-group">
-              <label className="input-label">PASSWORD</label>
-              <input
-                type="password"
-                className="input-field"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={loading}
-              style={{ width: '100%', padding: '16px', fontSize: '1rem', borderRadius: '14px', marginTop: '8px' }}
-            >
-              {loading ? 'PROCESSING...' : `Sign In as ${portalRole.toUpperCase()}`}
-            </button>
-          </form>
         )}
 
       </div>

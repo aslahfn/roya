@@ -24,6 +24,7 @@ model User {
   deliveries     Order[]         @relation(name: "DriverOrders")
   addresses      CustomerAddress[]
   cart           Cart?
+  notifications  Notification[]
 }
 
 model Branch {
@@ -31,9 +32,22 @@ model Branch {
   name           String
   location       String
   users          User[]
+  drivers        Driver[]
   inventory      ProductBranch[]
   pricing        Pricing[]
   auditLogs      PriceAuditLog[]
+}
+
+model Driver {
+  id            String    @id @default(cuid())
+  name          String
+  phone         String
+  vehicleNumber String
+  status        String    @default("AVAILABLE") // AVAILABLE, BUSY, INACTIVE
+  branchId      String?
+  branch        Branch?   @relation(fields: [branchId], references: [id])
+  orders        Order[]   @relation(name: "AssignedDriverOrders")
+  createdAt     DateTime  @default(now())
 }
 
 model Product {
@@ -47,14 +61,18 @@ model Product {
   barcode             String?   @unique
   sku                 String    @unique
   weight              Float?
-  unit                String?
+  unit                String?   @default("Piece") // Kg, Gram, Litre, Millilitre, Packet, Piece, Bottle, Box, Dozen, Bundle, Custom
   ingredients         String?
   nutrition           String?
   countryOfOrigin     String?
   storageInstructions String?
   expiryDate          DateTime?
+  supplier            String?
+  purchaseDate        DateTime?
+  minStock            Int       @default(5)
+  maxStock            Int       @default(500)
   
-  // New Management Fields
+  // Management Flags
   isFeatured          Boolean   @default(false)
   isBestSeller        Boolean   @default(false)
   tags                String?
@@ -128,7 +146,6 @@ model PaymentMethod {
   cardholderName String
   createdAt      DateTime  @default(now())
 
-  // Note: We do not store the full PAN or CVV for security reasons
   user           User      @relation(fields: [userId], references: [id])
   orders         Order[]
 }
@@ -176,11 +193,35 @@ model CartItem {
   product   Product  @relation(fields: [productId], references: [id])
 }
 
+model Notification {
+  id         String   @id @default(cuid())
+  userId     String?
+  roleTarget String?  // 'ADMIN', 'CUSTOMER'
+  title      String
+  message    String
+  type       String   // 'NEW_ORDER', 'ORDER_ACCEPTED', 'ORDER_UPDATED', 'LOW_STOCK', 'DRIVER_ASSIGNED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'
+  data       String?  // JSON string
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  user       User?    @relation(fields: [userId], references: [id])
+}
+
+model EmailLog {
+  id        String   @id @default(cuid())
+  recipient String
+  subject   String
+  orderId   String?
+  body      String
+  sentAt    DateTime @default(now())
+}
+
 model Order {
   id                    String      @id @default(cuid())
   userId                String
   paymentMethodId       String?
-  driverId              String?     
+  driverId              String?
+  assignedDriverId      String?
   totalAmount           Float
   deliveryAddress       String?
   latitude              Float?
@@ -188,23 +229,30 @@ model Order {
   deliveryNotes         String?
   otp                   String?
   estimatedDeliveryTime DateTime?
-  status                String      @default("RECEIVED") // RECEIVED, CONFIRMED, PREPARING, PACKED, OUT_FOR_DELIVERY, DELIVERED, CANCELLED
+  status                String      @default("RECEIVED") // RECEIVED, ACCEPTED, PREPARING, PACKED, ASSIGNED_DRIVER, OUT_FOR_DELIVERY, DELIVERED, CANCELLED
   paymentStatus         String      @default("PENDING") // PENDING, PAID, FAILED, COD
+  inventoryAdjusted     Boolean     @default(false)
+  adjustmentNotes       String?
+  customerAccepted      Boolean     @default(true)
   createdAt             DateTime    @default(now())
   
   user                  User           @relation(name: "UserOrders", fields: [userId], references: [id])
   driver                User?          @relation(name: "DriverOrders", fields: [driverId], references: [id])
+  assignedDriver        Driver?        @relation(name: "AssignedDriverOrders", fields: [assignedDriverId], references: [id])
   paymentMethod         PaymentMethod? @relation(fields: [paymentMethodId], references: [id])
   items                 OrderItem[]
 }
 
 model OrderItem {
-  id        String   @id @default(cuid())
-  orderId   String
-  productId String
-  quantity  Int
-  price     Float
+  id             String   @id @default(cuid())
+  orderId        String
+  productId      String
+  quantity       Int
+  originalQty    Int?
+  price          Float
+  unit           String?  @default("Piece")
+  replacementNote String?
 
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product   Product  @relation(fields: [productId], references: [id])
+  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product        Product  @relation(fields: [productId], references: [id])
 }

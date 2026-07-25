@@ -1,7 +1,20 @@
 import { getSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { AdminNotificationBar } from '@/components/admin/AdminNotificationBar';
+import { 
+  LayoutDashboard, 
+  ShoppingBag, 
+  Package, 
+  Grid, 
+  Truck, 
+  Users, 
+  Boxes, 
+  Bell, 
+  BarChart3, 
+  Settings,
+  LogOut,
+  Crown
+} from 'lucide-react';
 
 export default async function AdminLayout({
   children,
@@ -14,95 +27,124 @@ export default async function AdminLayout({
     redirect('/login');
   }
 
-  const isSuperOrPricing = session.role === 'SUPER_ADMIN' || session.role === 'PRICING_MANAGER';
+  const menuItems = [
+    { label: 'Dashboard Overview', href: '/admin', icon: LayoutDashboard },
+    { label: 'Orders', href: '/admin/orders', icon: ShoppingBag },
+    { label: 'Products', href: '/admin/products', icon: Package },
+    { label: 'Categories', href: '/admin/categories', icon: Grid },
+    { label: 'Drivers', href: '/admin/drivers', icon: Truck },
+    { label: 'Customers', href: '/admin/customers', icon: Users },
+    { label: 'Inventory', href: '/admin/inventory', icon: Boxes },
+    { label: 'Notifications', href: '/admin/notifications', icon: Bell },
+    { label: 'Reports', href: '/admin/reports/financial', icon: BarChart3 },
+    { label: 'Settings', href: '/admin/settings', icon: Settings },
+  ];
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)', position: 'relative', overflow: 'hidden' }}>
-      <AdminNotificationBar />
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc', position: 'relative', overflow: 'hidden' }}>
       
-      {/* Animated Professional Background Watermark */}
-      <div style={{
-        position: 'fixed',
-        bottom: '-20%',
-        right: '-10%',
-        width: '80vw',
-        height: '80vw',
-        maxWidth: '1200px',
-        maxHeight: '1200px',
-        opacity: 0.03,
-        pointerEvents: 'none',
-        zIndex: 0,
-        backgroundImage: 'url(/logo.jpg)',
-        backgroundSize: 'contain',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        mixBlendMode: 'multiply',
-        animation: 'slowRotate 60s linear infinite',
-      }}></div>
-
-      <style>{`
-        @keyframes slowRotate {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
-
       {/* Sidebar */}
       <aside style={{
-        width: '260px',
-        background: 'rgba(248, 250, 252, 0.8)',
-        backdropFilter: 'blur(20px)',
-        borderRight: '1px solid var(--border-light)',
+        width: '270px',
+        background: '#ffffff',
+        borderRight: '1px solid #e2e8f0',
         padding: '24px 0',
         display: 'flex',
         flexDirection: 'column',
         position: 'relative',
-        zIndex: 10
+        zIndex: 10,
+        boxShadow: '4px 0 20px rgba(0,0,0,0.02)'
       }}>
-        <div style={{ padding: '0 24px', marginBottom: '32px' }}>
-          <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.25rem', fontWeight: 800, margin: 0, letterSpacing: '-0.02em' }}>SYSTEM_ADMIN</h2>
-          <span className="badge badge-neutral" style={{ marginTop: '12px' }}>{session.role.replace('_', ' ')}</span>
+        {/* Brand Header */}
+        <div style={{ padding: '0 24px', marginBottom: '28px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #16A34A 0%, #15803D 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#FFB800',
+            boxShadow: '0 4px 12px rgba(22,163,74,0.3)'
+          }}>
+            <Crown size={22} />
+          </div>
+          <div>
+            <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.1rem', fontWeight: 900, margin: 0, color: '#0F172A', lineHeight: 1.1 }}>
+              ROYA ADMIN
+            </h2>
+            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#16A34A', letterSpacing: '0.05em' }}>
+              PROD PLATFORM
+            </span>
+          </div>
         </div>
 
-        <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', padding: '0 16px' }}>
-          <Link href="/admin" style={{ padding: '12px 16px', fontWeight: 600, fontSize: '0.9rem', textTransform: 'uppercase', transition: 'background 0.2s', ...({ ':hover': { background: 'var(--bg-tertiary)' } } as any) }}>
-            DASHBOARD
-          </Link>
-          <Link href="/admin/products" style={{ padding: '12px 16px', fontWeight: 600, fontSize: '0.9rem', textTransform: 'uppercase' }}>
-            PRODUCTS
-          </Link>
-          <Link href="/admin/inventory" style={{ padding: '12px 16px', fontWeight: 600, fontSize: '0.9rem', textTransform: 'uppercase' }}>
-            INVENTORY
-          </Link>
-          <Link href="/admin/delivery" style={{ padding: '12px 16px', fontWeight: 600, fontSize: '0.9rem', textTransform: 'uppercase' }}>
-            DELIVERY DISPATCH
-          </Link>
+        {/* Admin User Info Badge */}
+        <div style={{ padding: '0 24px', marginBottom: '20px' }}>
+          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '10px 14px', borderRadius: '14px' }}>
+            <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#166534' }}>{session.name}</div>
+            <div style={{ fontSize: '0.72rem', color: '#15803d', fontWeight: 700 }}>{session.role}</div>
+          </div>
+        </div>
 
-          {/* RBAC Protected Links */}
-          {isSuperOrPricing && (
-            <>
-              <div style={{ margin: '24px 0 8px 16px', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--accent-primary)', fontWeight: 600 }}>
-                RESTRICTED
-              </div>
-              <Link href="/admin/pricing" style={{ padding: '12px 16px', fontWeight: 600, fontSize: '0.9rem', textTransform: 'uppercase', color: 'var(--accent-primary)' }}>
-                PRICING
+        {/* Simplified Navigation Menu */}
+        <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px', padding: '0 16px' }}>
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '12px 16px',
+                  fontWeight: 700,
+                  fontSize: '0.88rem',
+                  color: '#334155',
+                  borderRadius: '14px',
+                  textDecoration: 'none',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <Icon size={18} color="#16a34a" />
+                <span>{item.label}</span>
               </Link>
-              <Link href="/admin/reports/financial" style={{ padding: '12px 16px', fontWeight: 600, fontSize: '0.9rem', textTransform: 'uppercase', color: 'var(--accent-primary)' }}>
-                FINANCIALS
-              </Link>
-            </>
-          )}
+            );
+          })}
         </nav>
 
-        <div style={{ padding: '24px' }}>
+        {/* Logout Button */}
+        <div style={{ padding: '0 24px' }}>
           <form action="/api/auth/logout" method="POST">
-            <button type="submit" className="btn btn-secondary" style={{ width: '100%' }}>LOGOUT</button>
+            <button
+              type="submit"
+              style={{
+                width: '100%',
+                padding: '12px',
+                borderRadius: '14px',
+                border: '1px solid #fecdd3',
+                background: '#fff1f2',
+                color: '#e11d48',
+                fontWeight: 800,
+                fontSize: '0.88rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px'
+              }}
+            >
+              <LogOut size={16} /> LOGOUT ADMIN
+            </button>
           </form>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main style={{ flex: 1, padding: '40px', overflowY: 'auto', position: 'relative', zIndex: 1 }}>
+      <main style={{ flex: 1, padding: '36px 40px', overflowY: 'auto', position: 'relative', zIndex: 1 }}>
         <div className="animate-fade-in">
           {children}
         </div>
