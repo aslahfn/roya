@@ -10,7 +10,7 @@ const globalForPrisma = globalThis as unknown as {
 
 function getDbFilePath(): string {
   if (process.env.VERCEL) {
-    const tmpDbPath = path.join('/tmp', 'dev.db');
+    const tmpDbPath = path.join('/tmp', 'dev_v2.db');
     if (!fs.existsSync(tmpDbPath)) {
       try {
         const buffer = Buffer.from(SEED_DB_B64, 'base64');
