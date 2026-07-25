@@ -47,12 +47,8 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json(formattedProducts);
-  } catch (error: any) {
-    return NextResponse.json({ 
-      isDiagnosticError: true,
-      errorMsg: error?.message || String(error), 
-      errorStack: error?.stack,
-      errorName: error?.name 
-    }, { status: 200 });
+  } catch (error) {
+    console.error('Products fetch error', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
