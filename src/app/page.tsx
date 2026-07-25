@@ -8,17 +8,21 @@ import { Sparkles, Truck, Award, ShieldCheck, Gift, ArrowRight } from 'lucide-re
 export default async function CustomerStorefront() {
   const session = await getSession();
   
-  const modeSetting = await db.settings.findUnique({
-    where: { key: 'CUSTOMER_APP_MODE' },
-  });
+  let modeSetting = null;
+  let products: any[] = [];
+
+  try {
+    modeSetting = await db.settings.findUnique({
+      where: { key: 'CUSTOMER_APP_MODE' },
+    });
+    products = await db.product.findMany({
+      include: { pricing: true }
+    });
+  } catch (err) {
+    console.error('Storefront DB Fetch Error:', err);
+  }
+
   const isPrivateStore = modeSetting?.value === 'PRIVATE';
-
-  const products = await db.product.findMany({
-    include: {
-      pricing: true
-    }
-  });
-
   const showPrices = session?.role === 'CUSTOMER' || (!session && !isPrivateStore) || session?.role === 'SUPER_ADMIN' || session?.role === 'PRICING_MANAGER';
 
   const categories = [
