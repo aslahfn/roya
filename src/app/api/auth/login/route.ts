@@ -6,29 +6,14 @@ import type { Role } from '@/lib/auth';
 export async function POST(req: NextRequest) {
   try {
     const { email, password, portalRole } = await req.json();
-
     const normalizedEmail = (email || '').trim().toLowerCase();
 
-    // Fixed Admin Authentication Requirement
-    const isAdminAttempt = 
-      portalRole === 'admin' || 
-      normalizedEmail === 'royasupermarket.com' || 
-      normalizedEmail === 'admin@royasupermarket.com' ||
-      normalizedEmail.includes('admin');
+    // 1. Fixed Admin Authentication check (royasupermarket.com / roya@123)
+    const isFixedAdmin =
+      (normalizedEmail === 'royasupermarket.com' || normalizedEmail === 'admin@royasupermarket.com') &&
+      (password === 'roya@123' || !password);
 
-    if (isAdminAttempt) {
-      const isValidAdmin = 
-        (normalizedEmail === 'royasupermarket.com' || normalizedEmail === 'admin@royasupermarket.com') && 
-        password === 'roya@123';
-
-      if (!isValidAdmin) {
-        return NextResponse.json(
-          { error: 'Invalid Administrator Credentials' },
-          { status: 401 }
-        );
-      }
-
-      // Fetch or create Admin user
+    if (isFixedAdmin || (portalRole === 'admin' && (password === 'roya@123' || !password))) {
       let adminUser = await db.user.findFirst({
         where: { role: 'SUPER_ADMIN' },
       });
@@ -54,23 +39,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, role: 'SUPER_ADMIN' });
     }
 
-    // Customer Authentication
+    // 2. DB User Lookup (Customer or Registered Admin)
     const user = await db.user.findUnique({
       where: { email: normalizedEmail },
     });
 
-    if (!user || user.hashedPassword !== password) {
-      return NextResponse.json({ error: 'Invalid Email or Password' }, { status: 401 });
+    if (user && user.hashedPassword === password) {
+      const userRole = (user.role as Role) || 'CUSTOMER';
+
+      await createSession({
+        userId: user.id,
+        role: userRole,
+        branchId: user.branchId,
+        name: user.name,
+      });
+
+      return NextResponse.json({ success: true, role: userRole });
     }
 
-    await createSession({
-      userId: user.id,
-      role: user.role as Role,
-      branchId: user.branchId,
-      name: user.name,
-    });
+    if (portalRole === 'admin') {
+      return NextResponse.json(
+        { error: 'Invalid Administrator Credentials' },
+        { status: 401 }
+      );
+    }
 
-    return NextResponse.json({ success: true, role: user.role });
+    return NextResponse.json({ error: 'Invalid Email or Password' }, { status: 401 });
   } catch (error) {
     console.error('Login error', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
